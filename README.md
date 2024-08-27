@@ -5,6 +5,10 @@ The first adapter is for DIMSE and MQTT over TCP using python.
 
 Future adapters will hopefully include adaptation for DICOM Web (UPS-RS) and to other event protocols (like AMQP and SMF), and using other languages (rust, for better performance, if that seems necessary).
 
+## Installation
+
+    poetry install
+
 ## Command-Line Interface
 
 The DICOM Event Broker Adapter can be run from the command line after installation. Here's how to use it:
@@ -62,3 +66,6 @@ This will display a help message with a description of the adapter and all avail
 ### Note
 
 Make sure you have the necessary DICOM configuration in place, including the `ApplicationEntities.json` file in your working directory, before running the adapter. This file should contain the necessary information about the Application Entities that the adapter will interact with.
+If you did not use poetry install, but have cloned the repository, the command line is
+
+python dicom_event_broker_adapter/ups_event_mqtt_broker_adapter.py
