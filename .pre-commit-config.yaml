@@ -34,7 +34,7 @@ repos:
       - id: sync_with_poetry
         args: [] # optional args
   - repo: https://github.com/pycqa/flake8
-    rev: 7.0.0  # Use the ref you want to point at
+    rev: 7.1.1  # Use the ref you want to point at
     hooks:
       - id: flake8
         name: flake8 (strict)
@@ -45,6 +45,7 @@ repos:
           "--statistics",
           "./"
         ]
+        exclude: ^(.venv/|docs/|tests/|setup.py)
       - id: flake8
         name: flake8 (relaxed)
         args: [
@@ -54,3 +55,4 @@ repos:
           "--statistics",
           "./"
         ]
+        exclude: ^(.venv/|docs/|tests/|setup.py)
