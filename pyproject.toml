@@ -1,0 +1,38 @@
+[tool.poetry]
+name = "dicom_event_broker_adapter"
+version = "0.1.0"
+description = "DICOM DIMSE UPS Event to MQTT Broker Adapter"
+authors = ["Stuart Swerdloff <sjswerdloff@gmail.com>"]
+license = "Apache-2"
+readme = "README.md"
+packages = [{include = "dicom_event_broker_adapter"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+paho-mqtt = "^2.1.0"
+pydicom = "^2.4.4"
+pynetdicom = "^2.1.1"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.2"
+black = "^24.8.0"
+isort = "^5.13.2"
+flake8 = "^7.1.1"
+
+[tool.poetry.scripts]
+dicom_event_broker_adapter = "dicom_event_broker_adapter.ups_event_mqtt_broker_adapter:main"
+
+[build-system]
+requires = ["poetry-core>=1.5.1"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 127
+target-version = ['py310']
+
+[tool.isort]
+profile = "black"
+line_length = 127
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
