@@ -1,5 +1,5 @@
 # dicom_event_broker_adapter
-Adapter between DICOM UPS Watch and Event and Event Brokers, such as MQTT.
+Adapter between DICOM UPS Watch and Event and Event Brokers, such as mosquitto and solace (at this point, any MQTT broker supporting 3.1.1)
 
 The first adapter is for DIMSE and MQTT over TCP using python.
 
