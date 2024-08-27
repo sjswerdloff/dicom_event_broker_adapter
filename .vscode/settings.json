@@ -9,8 +9,11 @@
         "naction",
         "nbstripout",
         "paho",
+        "pytest",
+        "snok",
         "userdata",
         "venv",
+        "virtualenvs",
         "watchscu",
         "workitems"
     ]
