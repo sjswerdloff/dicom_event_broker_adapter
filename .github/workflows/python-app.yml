@@ -63,4 +63,4 @@ jobs:
         poetry run flake8 --count --extend-ignore=E203 --max-line-length=127 --statistics dicom_event_broker_adapter
     - name: Test with pytest
       run: |
-        poetry run pytest dicom_event_broker_adapter/tests
+        poetry run pytest tests
