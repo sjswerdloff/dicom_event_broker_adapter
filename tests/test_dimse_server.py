@@ -1,6 +1,5 @@
 from unittest.mock import MagicMock, patch
 
-import pytest
 from pynetdicom import AE
 from pynetdicom.sop_class import UnifiedProcedureStepEvent, UnifiedProcedureStepPush, UnifiedProcedureStepWatch, Verification
 
@@ -15,7 +14,7 @@ class TestDIMSEServer:
         listening_port = 11119
 
         # Mock the event handlers
-        mock_handlers = [(1, "handle_n_action"), (2, "handle_n_event"), (3, "handle_echo")]
+        # mock_handlers = [(1, "handle_n_action"), (2, "handle_n_event"), (3, "handle_echo")]
         mock_evt.EVT_N_ACTION = 1
         mock_evt.EVT_N_EVENT_REPORT = 2
         mock_evt.EVT_C_ECHO = 3

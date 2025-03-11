@@ -1,8 +1,6 @@
 from unittest.mock import MagicMock, patch
 
-import pytest
-
-from dicom_event_broker_adapter.ups_event_mqtt_broker_adapter import Command, register_subscriber, unregister_subscriber
+from dicom_event_broker_adapter.ups_event_mqtt_broker_adapter import register_subscriber, unregister_subscriber
 
 
 class TestMQTTFunctions:

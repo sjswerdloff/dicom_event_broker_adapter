@@ -1,10 +1,9 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
 # Import helpers from conftest.py
 from conftest import create_dimse_n_action_mock
-from pydicom import Dataset
 
 from dicom_event_broker_adapter.ups_event_mqtt_broker_adapter import handle_echo, handle_n_action
 
@@ -58,4 +57,3 @@ class TestDIMSEHandlers:
     @pytest.mark.skip(reason="This test is too complex to mock correctly")
     def test_handle_n_action_unsubscribe(self):
         """Placeholder for N-ACTION unsubscribe test (skipped due to complexity)."""
-        pass

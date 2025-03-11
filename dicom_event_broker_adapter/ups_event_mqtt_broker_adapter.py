@@ -31,7 +31,7 @@ logging.basicConfig()
 
 ADAPTER_AE_TITLE = "UPSEventBroker01"
 broker_address: str = "127.0.0.1"  # use loopback as a default
-broker_port: int = 1833  # default MQTT port
+broker_port: int = 1883  # default MQTT port
 
 event_type_dict = {
     1: "UPS State Report",
@@ -123,8 +123,7 @@ def process_mqtt_message(this_client: mqtt_client.Client, userdata: Any, message
             uid = parts[2]
             if uid in [UPSGlobalSubscriptionInstance, UPSFilteredGlobalSubscriptionInstance]:
                 event_type = 0
-                action_type = 3  # subscribe
-                action_type = 4  # unsubscribe
+                action_type = 4  # unsubscribe - only the last assignment has effect
             else:
                 ups_uid = uid
                 if len(parts) > 3:

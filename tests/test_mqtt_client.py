@@ -120,6 +120,34 @@ class TestMQTTClient:
                 # Verify send_event_report was not called
                 mock_send_event.assert_not_called()
 
+    @patch("dicom_event_broker_adapter.ups_event_mqtt_broker_adapter.send_event_report")
+    @patch("multiprocessing.current_process")
+    def test_process_mqtt_message_invalid_topic(self, mock_process, mock_send_event, mqtt_client_mock, test_dataset):
+        """Test processing of MQTT messages with an unknown/invalid topic."""
+        # Setup mocks
+        mock_process.return_value.name = "TEST_AE"
+
+        # Create mock message with invalid topic
+        mock_userdata = MagicMock()
+        mock_msg = MagicMock()
+        mock_msg.topic = "/invalid/topic"
+        mock_msg.payload.decode.return_value = '{"test": "data"}'
+
+        # Setup Dataset mock
+        with patch("json.loads", return_value={"test": "data"}):
+            with patch("pydicom.Dataset.from_json", return_value=test_dataset):
+                with patch("builtins.print") as mock_print:
+                    # Call process_mqtt_message with an invalid topic
+                    process_mqtt_message(mqtt_client_mock, mock_userdata, mock_msg)
+
+                    # Verify topic parts were printed (debugging output)
+                    mock_print.assert_any_call(["", "invalid", "topic"])
+
+                    # Verify send_event_report is not called for invalid topics
+                    # This is the key assertion - we want to make sure no event report is sent
+                    # for topics that don't match our expected patterns
+                    mock_send_event.assert_not_called()
+
     @patch("dicom_event_broker_adapter.ups_event_mqtt_broker_adapter.mqtt_client")
     @patch("dicom_event_broker_adapter.ups_event_mqtt_broker_adapter.time.sleep")
     def test_mqtt_client_process_command_handling(self, mock_sleep, mock_mqtt_client):

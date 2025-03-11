@@ -6,15 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from pydicom import Dataset
-from pynetdicom.events import Event
-from pynetdicom.sop_class import (
-    UnifiedProcedureStepEvent,
-    UnifiedProcedureStepPush,
-    UnifiedProcedureStepWatch,
-    UPSFilteredGlobalSubscriptionInstance,
-    UPSGlobalSubscriptionInstance,
-    Verification,
-)
+from pynetdicom.sop_class import UnifiedProcedureStepPush, UPSGlobalSubscriptionInstance
 
 
 @pytest.fixture

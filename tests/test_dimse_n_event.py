@@ -1,8 +1,6 @@
 import json
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 # Import helpers from conftest.py
 from conftest import create_dimse_n_event_mock
 

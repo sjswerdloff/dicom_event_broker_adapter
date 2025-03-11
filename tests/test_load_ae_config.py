@@ -1,9 +1,5 @@
 import json
-import os
-from pathlib import Path
 from unittest.mock import mock_open, patch
-
-import pytest
 
 from dicom_event_broker_adapter.ups_event_mqtt_broker_adapter import load_ae_config
 
