@@ -25,7 +25,7 @@ class Test_ConstructMqttTopic:
         assert result == "/workitems"
 
     # Tests FilteredWorklist with empty filter returns topic for all workitems
-    def test_filtered_worklist_with_empty_filter_returns_all_workitems(self):
+    def test_empty_filter_returns_all_workitems(self):
         # Create an empty filter dataset
         empty_filter_ds = Dataset()
 
