@@ -24,6 +24,17 @@ class Test_ConstructMqttTopic:
 
         assert result == "/workitems"
 
+    # Tests FilteredWorklist with empty filter returns topic for all workitems
+    def test_filtered_worklist_with_empty_filter_returns_all_workitems(self):
+        # Create an empty filter dataset
+        empty_filter_ds = Dataset()
+
+        result = _construct_mqtt_topic(
+            event_type="Workitem", subscription_type="FilteredWorklist", dicom_topic_filter=empty_filter_ds
+        )
+
+        assert result == "/workitems"
+
     # Constructs workitem-specific topic without subtopic
     def test_constructs_topic_for_specific_workitem(self):
         workitem_uid = "1.2.3.4.5.6.7.8.9"
