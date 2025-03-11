@@ -9,6 +9,51 @@ Future adapters will hopefully include adaptation for DICOM Web (UPS-RS) and to 
 
     poetry install
 
+## Testing
+
+### Unit Tests
+
+Run the unit tests with:
+
+    poetry run pytest tests --ignore=tests/test_mqtt_integration.py
+
+### Integration Tests
+
+Integration tests require a running Mosquitto MQTT broker. You can run these tests by:
+
+1. Start the Mosquitto broker:
+
+    ```
+    ./scripts/run_mosquitto.sh start
+    ```
+
+    The script will try to use:
+    - An existing Mosquitto broker if one is already running on port 1883
+    - Docker to run Mosquitto in a container
+    - A locally installed Mosquitto if Docker is not available
+
+2. Run the integration tests:
+
+    ```
+    poetry run pytest tests/test_mqtt_integration.py -v
+    ```
+
+3. Stop the Mosquitto broker when done:
+
+    ```
+    ./scripts/run_mosquitto.sh stop
+    ```
+
+4. Check Mosquitto status:
+
+    ```
+    ./scripts/run_mosquitto.sh status
+    ```
+
+You can also run all tests (both unit and integration) if Mosquitto is running:
+
+    poetry run pytest tests
+
 ## Command-Line Interface
 
 The DICOM Event Broker Adapter can be run from the command line after installation. Here's how to use it:

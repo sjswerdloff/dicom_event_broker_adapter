@@ -17,6 +17,19 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    services:
+      mosquitto:
+        image: eclipse-mosquitto:2.0
+        ports:
+          - 1883:1883
+        volumes:
+          - ${{ github.workspace }}/tests/config/mosquitto.conf:/mosquitto/config/mosquitto.conf
+        options: >-
+          --health-cmd "timeout 5 mosquitto_sub -t test/topic -C 1 -E -v"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python 3.10
@@ -61,6 +74,10 @@ jobs:
         # --extend-ignore=203 because black puts in a space before a slicing :
         # while flake8 complains (this warning is not PEP 8 compliant), If W503 pops up, that should be disabled also
         poetry run flake8 --count --extend-ignore=E203 --max-line-length=127 --statistics dicom_event_broker_adapter
-    - name: Test with pytest
+    - name: Run unit tests with pytest
       run: |
-        poetry run pytest tests
+        poetry run pytest tests --ignore=tests/test_mqtt_integration.py
+
+    - name: Run integration tests with real Mosquitto
+      run: |
+        poetry run pytest tests/test_mqtt_integration.py -v

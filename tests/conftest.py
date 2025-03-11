@@ -2,11 +2,32 @@
 Common fixtures and utilities for tests.
 """
 import json
+import socket
 from unittest.mock import MagicMock, patch
 
 import pytest
 from pydicom import Dataset
 from pynetdicom.sop_class import UnifiedProcedureStepPush, UPSGlobalSubscriptionInstance
+
+
+def pytest_configure(config):
+    """Configure pytest with custom markers."""
+    config.addinivalue_line("markers", "mqtt_integration: mark test as requiring a real MQTT broker")
+
+
+def is_port_open(host, port):
+    """Check if a port is open."""
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.settimeout(1)
+    result = sock.connect_ex((host, port))
+    sock.close()
+    return result == 0
+
+
+# Skip if Mosquitto is not running
+mqtt_integration = pytest.mark.skipif(
+    not is_port_open("localhost", 1883), reason="Mosquitto broker not available on localhost:1883"
+)
 
 
 @pytest.fixture

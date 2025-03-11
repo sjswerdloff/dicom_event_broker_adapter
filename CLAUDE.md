@@ -2,11 +2,16 @@
 
 ## Commands
 - Install dependencies: `poetry install`
+- Run unit tests: `poetry run pytest tests --ignore=tests/test_mqtt_integration.py`
+- Run integration tests: `poetry run pytest tests/test_mqtt_integration.py -v`
+- Run tests with specific marker: `poetry run pytest -m mqtt_integration`
 - Run all tests: `poetry run pytest tests`
 - Run specific test: `poetry run pytest tests/test_file.py::TestClass::test_method`
 - Lint code: `poetry run flake8 dicom_event_broker_adapter`
 - Format code: `poetry run black dicom_event_broker_adapter`
 - Sort imports: `poetry run isort dicom_event_broker_adapter`
+- Start Mosquitto for testing: `./scripts/run_mosquitto.sh start`
+- Stop Mosquitto after testing: `./scripts/run_mosquitto.sh stop`
 
 ## Code Style
 - Follow Black formatting (line length: 127)
