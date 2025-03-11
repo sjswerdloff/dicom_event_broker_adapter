@@ -7,6 +7,7 @@ import pytest
 from dicom_event_broker_adapter.ups_event_mqtt_broker_adapter import (
     mqtt_client_process,
     on_connect,
+    on_disconnect,
     on_message,
     process_mqtt_message,
 )
@@ -177,6 +178,9 @@ class TestMQTTClient:
         mock_client.connect.assert_called_once_with("localhost", 1883, 60)
         mock_client.loop_start.assert_called_once()
 
+        # Verify that on_disconnect handler was registered
+        assert mock_client.on_disconnect is not None
+
         # Verify subscription was made
         mock_client.subscribe.assert_called_once_with("/workitems/test")
 
@@ -204,3 +208,51 @@ class TestMQTTClient:
 
         # Verify unsubscription was made - at least once
         assert mock_client.unsubscribe.call_count >= 1
+
+    def test_on_disconnect_reconnect(self, mqtt_client_mock):
+        """
+        Test that when the MQTT client is unexpectedly disconnected (rc != 0),
+        it attempts to reconnect.
+        """
+        # Setup the process name
+        with patch("multiprocessing.current_process") as mock_process:
+            mock_process.return_value.name = "TEST_PROCESS"
+
+            # Call the function with unexpected disconnect (rc != 0)
+            on_disconnect(mqtt_client_mock, None, rc=1)
+
+            # Verify reconnect was called
+            mqtt_client_mock.reconnect.assert_called_once()
+
+    def test_on_disconnect_no_reconnect_for_expected_disconnect(self, mqtt_client_mock):
+        """
+        Test that when the MQTT client is cleanly disconnected (rc == 0),
+        it does not attempt reconnection.
+        """
+        # Setup the process name
+        with patch("multiprocessing.current_process") as mock_process:
+            mock_process.return_value.name = "TEST_PROCESS"
+
+            # Call the function with expected/clean disconnect (rc == 0)
+            on_disconnect(mqtt_client_mock, None, rc=0)
+
+            # Verify reconnect was not called
+            mqtt_client_mock.reconnect.assert_not_called()
+
+    def test_on_disconnect_reconnect_exception_handling(self, mqtt_client_mock):
+        """
+        Test that exceptions during reconnect attempts are properly handled.
+        """
+        # Setup the process name
+        with patch("multiprocessing.current_process") as mock_process:
+            mock_process.return_value.name = "TEST_PROCESS"
+
+            # Make reconnect throw an exception
+            mqtt_client_mock.reconnect.side_effect = Exception("Test reconnect error")
+
+            # Verify the function handles the exception without raising it
+            with patch("builtins.print") as mock_print:
+                on_disconnect(mqtt_client_mock, None, rc=1)
+
+                # Verify error is logged
+                mock_print.assert_any_call("Failed to reconnect: Test reconnect error")

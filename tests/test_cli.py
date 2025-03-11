@@ -51,6 +51,9 @@ class TestCLI:
         mock_client.connect.assert_called_once_with(host="127.0.0.1", port=1883)
         mock_client.loop_start.assert_called_once()
 
+        # Verify that on_disconnect handler was registered
+        assert mock_client.on_disconnect is not None
+
         # Verify AE setup
         mock_ae.assert_called_once_with("UPSEventBroker01")
 
@@ -97,6 +100,9 @@ class TestCLI:
         # Verify MQTT client setup with custom values
         mock_mqtt_client.Client.assert_called_once_with(mock_mqtt_client.CallbackAPIVersion.VERSION2, client_id="CUSTOM_AE")
         mock_client.connect.assert_called_once_with(host="192.168.1.100", port=8883)
+
+        # Verify that on_disconnect handler was registered
+        assert mock_client.on_disconnect is not None
 
         # Verify AE setup with custom AE title
         mock_ae.assert_called_once_with("CUSTOM_AE")

@@ -61,12 +61,15 @@ subscriber_processes: List[Process] = []
 
 
 def load_ae_config(path_to_ae_config: Union[str, Path] = None) -> Dict[str, Tuple[str, int]]:
-    """Returns a dictionary of AEs, with the values being the IPAddr, Port tuple
-        The AE file is expected to be json, as an array of (AETitle:str,IPAddr:str,Port:int)
-        It is possible for there to be duplicate AE Titles in the list with varying IPAddr and/or Port.
-        Last entry wins (the dict is just overwritten)
+    """Returns a dictionary of AEs, with the values being the IPAddr, Port tuple.
+
+    The AE file is expected to be json, as an array of (AETitle:str,IPAddr:str,Port:int).
+    It is possible for there to be duplicate AE Titles in the list with varying IPAddr and/or Port.
+    Last entry wins (the dict is just overwritten).
+
     Returns:
-        Dict[str,(str,int)]: The dict of AEs with key being the AE Title and the value being a (str,int) Tuple of IPAddr,Port
+        Dict[str,(str,int)]: The dict of AEs with key being the AE Title and the value being a
+        (str,int) Tuple of IPAddr,Port
     """
     dict_of_tuple: Dict[str, Tuple[str, int]] = {}
     if path_to_ae_config is not None:
@@ -92,9 +95,32 @@ def on_connect(
     client: mqtt_client.Client, userdata: Any, flags: Dict[str, int], rc: int, properties: mqtt_properties = None
 ) -> None:
     print("Connected!")
-    print(
-        f"Process {multiprocessing.current_process().name}: Connected with result code {rc} and properties {mqtt_properties}"
-    )
+    print(f"Process {multiprocessing.current_process().name}: " f"Connected with result code {rc} and properties {properties}")
+
+
+def on_disconnect(client: mqtt_client.Client, userdata: Any, rc: int, properties: mqtt_properties = None) -> None:
+    """
+    Handle MQTT client disconnection events.
+
+    Args:
+        client: The MQTT client that was disconnected
+        userdata: User data passed to the client constructor
+        rc: The disconnection result code (0 for expected, non-zero for unexpected)
+        properties: Properties for MQTT v5 (optional)
+    """
+    if rc != 0:
+        # This is an unexpected disconnection - try to reconnect
+        print(
+            f"Process {multiprocessing.current_process().name}: "
+            f"Unexpected disconnection (rc={rc}). Attempting to reconnect..."
+        )
+        try:
+            client.reconnect()
+        except Exception as e:
+            print(f"Failed to reconnect: {e}")
+    else:
+        # This is an expected/clean disconnection, don't attempt to reconnect
+        print(f"Process {multiprocessing.current_process().name}: Clean disconnection (rc=0)")
 
 
 def on_message(client: mqtt_client.Client, userdata: Any, msg: mqtt_client.MQTTMessage) -> None:
@@ -200,6 +226,7 @@ def mqtt_client_process(process_name: str, broker: str, port: int, command_queue
         client.enable_logger()
         client.on_connect = on_connect
         client.on_message = on_message
+        client.on_disconnect = on_disconnect
         print(f"Connecting client to broker {broker} on port {port}")
         client.connect(broker, port, 60)
         error_code = client.loop_start()
@@ -623,6 +650,7 @@ def main():
     # known_aes = load_ae_config()
     mqtt_publishing_client = mqtt_client.Client(mqtt_client.CallbackAPIVersion.VERSION2, client_id=server_ae_title)
     mqtt_publishing_client.on_connect = on_connect
+    mqtt_publishing_client.on_disconnect = on_disconnect
     mqtt_publishing_client.connect(host=broker_address, port=broker_port)  # clean_start=True)
     mqtt_publishing_client.loop_start()
 
