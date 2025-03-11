@@ -22,8 +22,6 @@ jobs:
         image: eclipse-mosquitto:2.0
         ports:
           - 1883:1883
-        volumes:
-          - ${{ github.workspace }}/tests/config:/mosquitto/config
         options: >-
           --health-cmd "mosquitto_sub -t test/topic -C 1 -E -v || exit 1"
           --health-interval 10s
@@ -74,10 +72,15 @@ jobs:
         # --extend-ignore=203 because black puts in a space before a slicing :
         # while flake8 complains (this warning is not PEP 8 compliant), If W503 pops up, that should be disabled also
         poetry run flake8 --count --extend-ignore=E203 --max-line-length=127 --statistics dicom_event_broker_adapter
-    - name: Verify Mosquitto config file is available
+    - name: Create and copy Mosquitto config
       run: |
+        docker exec $(docker ps -q --filter "ancestor=eclipse-mosquitto:2.0") sh -c "mkdir -p /mosquitto/config"
+        docker cp ${{ github.workspace }}/tests/config/mosquitto.conf $(docker ps -q --filter "ancestor=eclipse-mosquitto:2.0"):/mosquitto/config/
         docker exec $(docker ps -q --filter "ancestor=eclipse-mosquitto:2.0") ls -la /mosquitto/config/
         docker exec $(docker ps -q --filter "ancestor=eclipse-mosquitto:2.0") cat /mosquitto/config/mosquitto.conf
+        # Restart mosquitto to use the new config
+        docker exec $(docker ps -q --filter "ancestor=eclipse-mosquitto:2.0") sh -c "pkill mosquitto || true"
+        docker exec $(docker ps -q --filter "ancestor=eclipse-mosquitto:2.0") sh -c "mosquitto -c /mosquitto/config/mosquitto.conf -d"
 
     - name: Run unit tests with pytest
       run: |
