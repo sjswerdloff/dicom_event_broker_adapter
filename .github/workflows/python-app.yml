@@ -74,13 +74,14 @@ jobs:
         poetry run flake8 --count --extend-ignore=E203 --max-line-length=127 --statistics dicom_event_broker_adapter
     - name: Create and copy Mosquitto config
       run: |
-        docker exec $(docker ps -q --filter "ancestor=eclipse-mosquitto:2.0") sh -c "mkdir -p /mosquitto/config"
-        docker cp ${{ github.workspace }}/tests/config/mosquitto.conf $(docker ps -q --filter "ancestor=eclipse-mosquitto:2.0"):/mosquitto/config/
-        docker exec $(docker ps -q --filter "ancestor=eclipse-mosquitto:2.0") ls -la /mosquitto/config/
-        docker exec $(docker ps -q --filter "ancestor=eclipse-mosquitto:2.0") cat /mosquitto/config/mosquitto.conf
+        CONTAINER_ID=$(docker ps -q --filter "ancestor=eclipse-mosquitto:2.0")
+        docker exec ${CONTAINER_ID} sh -c "mkdir -p /mosquitto/config"
+        docker cp ${{ github.workspace }}/tests/config/mosquitto.conf ${CONTAINER_ID}:/mosquitto/config/
+        docker exec ${CONTAINER_ID} ls -la /mosquitto/config/
+        docker exec ${CONTAINER_ID} cat /mosquitto/config/mosquitto.conf
         # Restart mosquitto to use the new config
-        docker exec $(docker ps -q --filter "ancestor=eclipse-mosquitto:2.0") sh -c "pkill mosquitto || true"
-        docker exec $(docker ps -q --filter "ancestor=eclipse-mosquitto:2.0") sh -c "mosquitto -c /mosquitto/config/mosquitto.conf -d"
+        docker exec ${CONTAINER_ID} sh -c "pkill mosquitto || true"
+        docker exec ${CONTAINER_ID} sh -c "mosquitto -c /mosquitto/config/mosquitto.conf -d"
 
     - name: Run unit tests with pytest
       run: |

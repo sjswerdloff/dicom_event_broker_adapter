@@ -63,8 +63,11 @@ class TestMQTTIntegration:
         # Act
         result = mqtt_client.publish(topic, test_message)
 
-        # Allow time for message to be received
-        time.sleep(0.5)
+        # Wait for message to be received using a polling mechanism
+        timeout = 2
+        start_time = time.time()
+        while time.time() - start_time < timeout and len(received_messages) < 1:
+            time.sleep(0.1)
 
         # Assert
         assert result.rc == 0  # MQTT_ERR_SUCCESS
