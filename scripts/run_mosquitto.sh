@@ -43,9 +43,20 @@ start_mosquitto() {
         fi
 
         # Start new container
+        # Ensure config file exists
+        if [ ! -f "$MOSQUITTO_CONFIG" ]; then
+            echo "⚠️ Config file not found: $MOSQUITTO_CONFIG"
+            exit 1
+        fi
+
+        echo "Using config from: $MOSQUITTO_CONFIG"
+
+        # Create a directory to hold the config if needed
+        CONFIG_DIR=$(dirname "$MOSQUITTO_CONFIG")
+
         docker run -d --name "$CONTAINER_NAME" \
             -p 1883:1883 \
-            -v "$MOSQUITTO_CONFIG:/mosquitto/config/mosquitto.conf" \
+            -v "$MOSQUITTO_CONFIG:/mosquitto/config/mosquitto.conf:ro" \
             eclipse-mosquitto:2.0
 
         echo "Waiting for Mosquitto to start..."

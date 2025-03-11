@@ -23,9 +23,9 @@ jobs:
         ports:
           - 1883:1883
         volumes:
-          - ${{ github.workspace }}/tests/config/:/mosquitto/config/
+          - ${{ github.workspace }}/tests/config:/mosquitto/config
         options: >-
-          --health-cmd "timeout 5 mosquitto_sub -t test/topic -C 1 -E -v"
+          --health-cmd "mosquitto_sub -t test/topic -C 1 -E -v || exit 1"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -74,6 +74,11 @@ jobs:
         # --extend-ignore=203 because black puts in a space before a slicing :
         # while flake8 complains (this warning is not PEP 8 compliant), If W503 pops up, that should be disabled also
         poetry run flake8 --count --extend-ignore=E203 --max-line-length=127 --statistics dicom_event_broker_adapter
+    - name: Verify Mosquitto config file is available
+      run: |
+        docker exec $(docker ps -q --filter "ancestor=eclipse-mosquitto:2.0") ls -la /mosquitto/config/
+        docker exec $(docker ps -q --filter "ancestor=eclipse-mosquitto:2.0") cat /mosquitto/config/mosquitto.conf
+
     - name: Run unit tests with pytest
       run: |
         poetry run pytest tests --ignore=tests/test_mqtt_integration.py
