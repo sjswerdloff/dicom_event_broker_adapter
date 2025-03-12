@@ -74,14 +74,44 @@ jobs:
         poetry run flake8 --count --extend-ignore=E203 --max-line-length=127 --statistics dicom_event_broker_adapter
     - name: Create and copy Mosquitto config
       run: |
+        # Ensure the mosquitto.conf file exists in the workspace
+        mkdir -p ${{ github.workspace }}/tests/config
+        if [ ! -f "${{ github.workspace }}/tests/config/mosquitto.conf" ]; then
+          echo "Creating default mosquitto.conf file"
+          cat > ${{ github.workspace }}/tests/config/mosquitto.conf << 'EOL'
+          listener 1883
+          allow_anonymous true
+          persistence false
+          log_type all
+          EOL
+        fi
+
+        # Get container ID and copy config
         CONTAINER_ID=$(docker ps -q --filter "ancestor=eclipse-mosquitto:2.0")
+        echo "Mosquitto container ID: ${CONTAINER_ID}"
+
+        # Create config directory in container
         docker exec ${CONTAINER_ID} sh -c "mkdir -p /mosquitto/config"
+
+        # Copy the config file
         docker cp ${{ github.workspace }}/tests/config/mosquitto.conf ${CONTAINER_ID}:/mosquitto/config/
+
+        # Verify config was copied
+        echo "Listing config directory:"
         docker exec ${CONTAINER_ID} ls -la /mosquitto/config/
+
+        echo "Config file content:"
         docker exec ${CONTAINER_ID} cat /mosquitto/config/mosquitto.conf
+
         # Restart mosquitto to use the new config
+        echo "Restarting Mosquitto with new config"
         docker exec ${CONTAINER_ID} sh -c "pkill mosquitto || true"
         docker exec ${CONTAINER_ID} sh -c "mosquitto -c /mosquitto/config/mosquitto.conf -d"
+
+        # Verify Mosquitto is running
+        sleep 2
+        echo "Checking if Mosquitto is running:"
+        docker exec ${CONTAINER_ID} sh -c "ps aux | grep mosquitto"
 
     - name: Run unit tests with pytest
       run: |
