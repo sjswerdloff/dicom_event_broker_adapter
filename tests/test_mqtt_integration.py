@@ -66,7 +66,7 @@ class TestMQTTIntegration:
         # Wait for message to be received using a polling mechanism
         timeout = 2
         start_time = time.time()
-        while time.time() - start_time < timeout and len(received_messages) < 1:
+        while time.time() - start_time < timeout and not received_messages:
             time.sleep(0.1)
 
         # Assert
