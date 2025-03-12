@@ -8,10 +8,11 @@ readme = "README.md"
 packages = [{include = "dicom_event_broker_adapter"}]
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = ">=3.10,<3.13"
 paho-mqtt = "^2.1.0"
 pydicom = "^2.4.4"
 pynetdicom = "^2.1.1"
+tdwii_plus_examples = {git = "https://github.com/sjswerdloff/tdwii_plus_examples.git"}
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.2"
