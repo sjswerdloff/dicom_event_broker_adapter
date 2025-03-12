@@ -85,8 +85,8 @@ jobs:
 
     - name: Run unit tests with pytest
       run: |
-        poetry run pytest tests --ignore=tests/test_mqtt_integration.py
+        poetry run pytest tests -m "not mqtt_integration"
 
     - name: Run integration tests with real Mosquitto
       run: |
-        poetry run pytest tests/test_mqtt_integration.py -v
+        poetry run pytest -m "mqtt_integration" -v
