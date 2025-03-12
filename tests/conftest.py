@@ -3,6 +3,7 @@ Common fixtures and utilities for tests.
 """
 import json
 import socket
+import subprocess
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -128,3 +129,22 @@ def mock_dcmread(request):
 
     with patch("dicom_event_broker_adapter.ups_event_mqtt_broker_adapter.dcmread", return_value=dataset) as mock:
         yield mock
+
+
+@pytest.fixture(scope="session", autouse=True)
+def cleanup_zombie_processes():
+    """Ensure any leftover MQTT processes are cleaned up after tests."""
+    yield
+
+    # Run Mosquitto stop script to ensure MQTT broker is properly stopped
+    try:
+        subprocess.run(["./scripts/run_mosquitto.sh", "stop"], check=False)
+    except Exception as e:
+        print(f"Error stopping Mosquitto: {e}")
+
+    # Try to kill any lingering processes
+    try:
+        # Find and kill any lingering Python processes that might be MQTT clients
+        subprocess.run("ps -ef | grep mqtt | grep -v grep | awk '{print $2}' | xargs -r kill -9", shell=True, check=False)
+    except Exception as e:
+        print(f"Error cleaning up MQTT processes: {e}")

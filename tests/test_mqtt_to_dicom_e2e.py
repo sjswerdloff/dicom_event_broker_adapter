@@ -61,9 +61,13 @@ class TestMQTTToDICOME2E:
         except Exception as e:
             pytest.skip(f"Failed to connect to MQTT broker: {e}")
         finally:
-            if client.is_connected():
+            try:
+                # Always attempt to stop the loop and disconnect
                 client.loop_stop()
                 client.disconnect()
+                print(f"MQTT client {client_id} properly disconnected")
+            except Exception as e:
+                print(f"Error during MQTT client cleanup: {e}")
 
     @pytest.fixture
     def ups_scp_server(self):
@@ -146,17 +150,27 @@ class TestMQTTToDICOME2E:
             # Clean up the server
             if server:
                 try:
+                    logger.debug("Shutting down DICOM server...")
                     server.shutdown()
+                    logger.debug("DICOM server shutdown completed")
                 except Exception as e:
                     logger.error(f"Error shutting down server: {e}")
 
             # Stop the thread
             if server_thread:
+                logger.debug("Stopping server thread...")
                 stop_flag.set()
-                server_thread.join(timeout=1)
+                server_thread.join(timeout=3)  # Increased timeout
+
+                # Check if thread is still alive and log a warning
+                if server_thread.is_alive():
+                    logger.warning("Server thread did not terminate properly after timeout")
+                else:
+                    logger.debug("Server thread stopped successfully")
 
             # Clean up temporary file
             if os.path.exists(temp_ae_path):
+                logger.debug(f"Removing temporary AE config file: {temp_ae_path}")
                 os.unlink(temp_ae_path)
 
     @pytest.mark.parametrize("event_type", ["state", "cancelrequest"])
@@ -295,11 +309,24 @@ class TestMQTTToDICOME2E:
                     f.write(original_ae_content)
 
             # Clean up the MQTT client if we created one
-            import dicom_event_broker_adapter.ups_event_mqtt_broker_adapter as adapter
+            try:
+                import dicom_event_broker_adapter.ups_event_mqtt_broker_adapter as adapter
 
-            if adapter.mqtt_publishing_client and adapter.mqtt_publishing_client.is_connected():
-                adapter.mqtt_publishing_client.loop_stop()
-                adapter.mqtt_publishing_client.disconnect()
+                if adapter.mqtt_publishing_client:
+                    logger.debug("Cleaning up adapter MQTT publishing client")
+                    try:
+                        adapter.mqtt_publishing_client.loop_stop()
+                    except Exception as e:
+                        logger.warning(f"Error stopping MQTT client loop: {e}")
+
+                    try:
+                        if adapter.mqtt_publishing_client.is_connected():
+                            adapter.mqtt_publishing_client.disconnect()
+                            logger.debug("Adapter MQTT publishing client disconnected")
+                    except Exception as e:
+                        logger.warning(f"Error disconnecting MQTT client: {e}")
+            except Exception as e:
+                logger.error(f"Error during module MQTT client cleanup: {e}")
 
     def test_mqtt_producer_to_dicom_consumer(self, mqtt_client, ups_scp_server):
         """
@@ -466,8 +493,21 @@ class TestMQTTToDICOME2E:
                     f.write(original_ae_content)
 
             # Clean up the MQTT client if we created one
-            import dicom_event_broker_adapter.ups_event_mqtt_broker_adapter as adapter
+            try:
+                import dicom_event_broker_adapter.ups_event_mqtt_broker_adapter as adapter
 
-            if adapter.mqtt_publishing_client and adapter.mqtt_publishing_client.is_connected():
-                adapter.mqtt_publishing_client.loop_stop()
-                adapter.mqtt_publishing_client.disconnect()
+                if adapter.mqtt_publishing_client:
+                    logger.debug("Cleaning up adapter MQTT publishing client")
+                    try:
+                        adapter.mqtt_publishing_client.loop_stop()
+                    except Exception as e:
+                        logger.warning(f"Error stopping MQTT client loop: {e}")
+
+                    try:
+                        if adapter.mqtt_publishing_client.is_connected():
+                            adapter.mqtt_publishing_client.disconnect()
+                            logger.debug("Adapter MQTT publishing client disconnected")
+                    except Exception as e:
+                        logger.warning(f"Error disconnecting MQTT client: {e}")
+            except Exception as e:
+                logger.error(f"Error during module MQTT client cleanup: {e}")
