@@ -2,6 +2,7 @@
 Common fixtures and utilities for tests.
 """
 import json
+import logging
 import socket
 import subprocess
 from unittest.mock import MagicMock, patch
@@ -14,6 +15,11 @@ from pynetdicom.sop_class import UnifiedProcedureStepPush, UPSGlobalSubscription
 def pytest_configure(config):
     """Configure pytest with custom markers."""
     config.addinivalue_line("markers", "mqtt_integration: mark test as requiring a real MQTT broker")
+
+
+# Configure logger for conftest
+logger = logging.getLogger("conftest")
+logger.setLevel(logging.DEBUG)
 
 
 def is_port_open(host, port):
@@ -159,6 +165,8 @@ def cleanup_zombie_processes():
     timer.daemon = True
     timer.start()
 
+    # Keep track of the timer to ensure it's properly canceled in the finally block
+
     try:
         # Run Mosquitto stop script to ensure MQTT broker is properly stopped
         if not skip_mosquitto_stop:
@@ -215,17 +223,15 @@ def cleanup_zombie_processes():
             except (ImportError, AttributeError) as e:
                 print(f"Could not clean up adapter module state: {e}")
 
-            # Find and kill any lingering Python processes that might be MQTT clients - with timeout
-            print("Killing any lingering MQTT processes...")
-            subprocess.run(
-                "ps -ef | grep mqtt | grep -v grep | awk '{print $2}' | xargs -r kill -9", shell=True, check=False, timeout=1
-            )
+            # Comment out aggressive process killing that could terminate pytest or other processes
+            print("WARNING: Skipping aggressive kill of MQTT/DICOM processes that could affect pytest")
+            # subprocess.run(
+            #     "ps -ef | grep mqtt | grep -v grep | awk '{print $2}' | xargs -r kill -9", shell=True, check=False, timeout=1
+            # )
 
-            # Find and kill any lingering Python processes that might be DICOM servers - with timeout
-            print("Killing any lingering DICOM processes...")
-            subprocess.run(
-                "ps -ef | grep dicom | grep -v grep | awk '{print $2}' | xargs -r kill -9", shell=True, check=False, timeout=1
-            )
+            # subprocess.run(
+            #     "ps -ef | grep dicom | grep -v grep | awk '{print $2}' | xargs -r kill -9", shell=True, check=False, timeout=1
+            # )
         except Exception as e:
             print(f"Error cleaning up processes: {e}")
 
@@ -235,5 +241,9 @@ def cleanup_zombie_processes():
         # Signal that cleanup is completed (or timed out)
         cleanup_completed.set()
 
-        # Cancel the timer if it's still running
-        timer.cancel()
+        # Always cancel the timer to prevent resource leaks
+        try:
+            timer.cancel()
+            logger.debug("Cleanup timer canceled successfully")
+        except Exception as e:
+            logger.warning(f"Error canceling cleanup timer: {e}")

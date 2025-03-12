@@ -162,7 +162,7 @@ class TestMQTTToDICOME2E:
                 except Exception as e:
                     logger.error(f"Error shutting down server: {e}")
 
-            # Stop the thread
+            # Stop the thread with more robust termination
             if server_thread:
                 logger.debug("Stopping server thread...")
                 stop_flag.set()
@@ -178,6 +178,8 @@ class TestMQTTToDICOME2E:
                         logger.warning(f"Server thread still alive after join attempt {attempt+1}, retrying...")
                     else:
                         logger.warning("Server thread did not terminate properly after multiple attempts")
+                        # Thread is daemon so it won't prevent pytest from exiting
+                        break
 
             # Clean up temporary file
             if os.path.exists(temp_ae_path):
@@ -187,6 +189,9 @@ class TestMQTTToDICOME2E:
     @pytest.mark.parametrize("event_type", ["state", "cancelrequest"])
     def test_mqtt_to_real_dicom_scp_adapter_initiated(self, mqtt_client, ups_scp_server, event_type):
         """Test the complete end-to-end flow from MQTT to a real DICOM UPS SCP using tdwii_plus_examples UPSNEventReceiver."""
+        # Import os to avoid UnboundLocalError
+        import os
+
         # Save the original ApplicationEntities.json to restore later
         original_ae_content = None
         if os.path.exists("ApplicationEntities.json"):
@@ -343,20 +348,40 @@ class TestMQTTToDICOME2E:
                     # Clear the client reference to help with garbage collection
                     adapter.mqtt_publishing_client = None
 
-                # Clean up any subscriber processes that might be running
+                # Clean up any subscriber processes that might be running with more robust termination
                 if adapter.subscriber_processes:
                     logger.debug(f"Cleaning up {len(adapter.subscriber_processes)} subscriber processes")
                     for process in adapter.subscriber_processes:
                         try:
                             if process.is_alive():
+                                # First try graceful termination
                                 process.terminate()
-                                process.join(timeout=1)
+                                # Use shorter timeout for first join attempt
+                                process.join(timeout=0.5)
+
+                                # If process is still alive, try again with longer timeout
                                 if process.is_alive():
-                                    logger.warning(f"Process {process.name} did not terminate properly")
+                                    logger.warning(f"Process {process.name} still alive after terminate, retrying...")
+                                    process.join(timeout=1.0)
+
+                                    # If still alive after second attempt, force kill on Unix systems
+                                    if process.is_alive():
+                                        logger.warning(f"Process {process.name} did not terminate properly, force killing...")
+                                        import os
+                                        import signal
+
+                                        try:
+                                            os.kill(process.pid, signal.SIGKILL)
+                                            # Short wait to allow OS to clean up
+                                            time.sleep(0.1)
+                                        except Exception as kill_error:
+                                            logger.error(f"Failed to kill process {process.name}: {kill_error}")
+                                else:
+                                    logger.debug(f"Process {process.name} terminated successfully")
                         except Exception as e:
                             logger.warning(f"Error terminating process {process.name}: {e}")
 
-                    # Clear the lists
+                    # Clear the lists to avoid re-terminating processes
                     adapter.subscriber_processes = []
                     adapter.subscriber_clients = []
                     adapter.command_queues = {}
@@ -370,6 +395,9 @@ class TestMQTTToDICOME2E:
         2. Broker converts to DICOM N-EVENT-REPORT
         3. Verify UPS N-EVENT-REPORT is received by UPSNEventReceiver
         """
+        # Import os to avoid UnboundLocalError
+        import os
+
         # Save the original ApplicationEntities.json to restore later
         original_ae_content = None
         if os.path.exists("ApplicationEntities.json"):
@@ -551,20 +579,40 @@ class TestMQTTToDICOME2E:
                     # Clear the client reference to help with garbage collection
                     adapter.mqtt_publishing_client = None
 
-                # Clean up any subscriber processes that might be running
+                # Clean up any subscriber processes that might be running with more robust termination
                 if adapter.subscriber_processes:
                     logger.debug(f"Cleaning up {len(adapter.subscriber_processes)} subscriber processes")
                     for process in adapter.subscriber_processes:
                         try:
                             if process.is_alive():
+                                # First try graceful termination
                                 process.terminate()
-                                process.join(timeout=1)
+                                # Use shorter timeout for first join attempt
+                                process.join(timeout=0.5)
+
+                                # If process is still alive, try again with longer timeout
                                 if process.is_alive():
-                                    logger.warning(f"Process {process.name} did not terminate properly")
+                                    logger.warning(f"Process {process.name} still alive after terminate, retrying...")
+                                    process.join(timeout=1.0)
+
+                                    # If still alive after second attempt, force kill on Unix systems
+                                    if process.is_alive():
+                                        logger.warning(f"Process {process.name} did not terminate properly, force killing...")
+                                        import os
+                                        import signal
+
+                                        try:
+                                            os.kill(process.pid, signal.SIGKILL)
+                                            # Short wait to allow OS to clean up
+                                            time.sleep(0.1)
+                                        except Exception as kill_error:
+                                            logger.error(f"Failed to kill process {process.name}: {kill_error}")
+                                else:
+                                    logger.debug(f"Process {process.name} terminated successfully")
                         except Exception as e:
                             logger.warning(f"Error terminating process {process.name}: {e}")
 
-                    # Clear the lists
+                    # Clear the lists to avoid re-terminating processes
                     adapter.subscriber_processes = []
                     adapter.subscriber_clients = []
                     adapter.command_queues = {}
