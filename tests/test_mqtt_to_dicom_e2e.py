@@ -63,11 +63,17 @@ class TestMQTTToDICOME2E:
         finally:
             try:
                 # Always attempt to stop the loop and disconnect
+                logger.debug(f"Cleaning up MQTT client {client_id}")
                 client.loop_stop()
-                client.disconnect()
-                print(f"MQTT client {client_id} properly disconnected")
+
+                # Wait a moment for the loop to fully stop
+                time.sleep(0.2)
+
+                if client.is_connected():
+                    client.disconnect()
+                    logger.debug(f"MQTT client {client_id} properly disconnected")
             except Exception as e:
-                print(f"Error during MQTT client cleanup: {e}")
+                logger.warning(f"Error during MQTT client cleanup: {e}")
 
     @pytest.fixture
     def ups_scp_server(self):
@@ -160,13 +166,18 @@ class TestMQTTToDICOME2E:
             if server_thread:
                 logger.debug("Stopping server thread...")
                 stop_flag.set()
-                server_thread.join(timeout=3)  # Increased timeout
 
-                # Check if thread is still alive and log a warning
-                if server_thread.is_alive():
-                    logger.warning("Server thread did not terminate properly after timeout")
-                else:
-                    logger.debug("Server thread stopped successfully")
+                # Join with an increased timeout
+                max_attempts = 3
+                for attempt in range(max_attempts):
+                    server_thread.join(timeout=3)  # 3 seconds timeout
+                    if not server_thread.is_alive():
+                        logger.debug("Server thread stopped successfully")
+                        break
+                    elif attempt < max_attempts - 1:
+                        logger.warning(f"Server thread still alive after join attempt {attempt+1}, retrying...")
+                    else:
+                        logger.warning("Server thread did not terminate properly after multiple attempts")
 
             # Clean up temporary file
             if os.path.exists(temp_ae_path):
@@ -316,15 +327,39 @@ class TestMQTTToDICOME2E:
                     logger.debug("Cleaning up adapter MQTT publishing client")
                     try:
                         adapter.mqtt_publishing_client.loop_stop()
+                        logger.debug("MQTT client loop stopped")
                     except Exception as e:
                         logger.warning(f"Error stopping MQTT client loop: {e}")
 
                     try:
+                        # Allow time for loop to fully stop before disconnecting
+                        time.sleep(0.2)
                         if adapter.mqtt_publishing_client.is_connected():
                             adapter.mqtt_publishing_client.disconnect()
                             logger.debug("Adapter MQTT publishing client disconnected")
                     except Exception as e:
                         logger.warning(f"Error disconnecting MQTT client: {e}")
+
+                    # Clear the client reference to help with garbage collection
+                    adapter.mqtt_publishing_client = None
+
+                # Clean up any subscriber processes that might be running
+                if adapter.subscriber_processes:
+                    logger.debug(f"Cleaning up {len(adapter.subscriber_processes)} subscriber processes")
+                    for process in adapter.subscriber_processes:
+                        try:
+                            if process.is_alive():
+                                process.terminate()
+                                process.join(timeout=1)
+                                if process.is_alive():
+                                    logger.warning(f"Process {process.name} did not terminate properly")
+                        except Exception as e:
+                            logger.warning(f"Error terminating process {process.name}: {e}")
+
+                    # Clear the lists
+                    adapter.subscriber_processes = []
+                    adapter.subscriber_clients = []
+                    adapter.command_queues = {}
             except Exception as e:
                 logger.error(f"Error during module MQTT client cleanup: {e}")
 
@@ -500,14 +535,38 @@ class TestMQTTToDICOME2E:
                     logger.debug("Cleaning up adapter MQTT publishing client")
                     try:
                         adapter.mqtt_publishing_client.loop_stop()
+                        logger.debug("MQTT client loop stopped")
                     except Exception as e:
                         logger.warning(f"Error stopping MQTT client loop: {e}")
 
                     try:
+                        # Allow time for loop to fully stop before disconnecting
+                        time.sleep(0.2)
                         if adapter.mqtt_publishing_client.is_connected():
                             adapter.mqtt_publishing_client.disconnect()
                             logger.debug("Adapter MQTT publishing client disconnected")
                     except Exception as e:
                         logger.warning(f"Error disconnecting MQTT client: {e}")
+
+                    # Clear the client reference to help with garbage collection
+                    adapter.mqtt_publishing_client = None
+
+                # Clean up any subscriber processes that might be running
+                if adapter.subscriber_processes:
+                    logger.debug(f"Cleaning up {len(adapter.subscriber_processes)} subscriber processes")
+                    for process in adapter.subscriber_processes:
+                        try:
+                            if process.is_alive():
+                                process.terminate()
+                                process.join(timeout=1)
+                                if process.is_alive():
+                                    logger.warning(f"Process {process.name} did not terminate properly")
+                        except Exception as e:
+                            logger.warning(f"Error terminating process {process.name}: {e}")
+
+                    # Clear the lists
+                    adapter.subscriber_processes = []
+                    adapter.subscriber_clients = []
+                    adapter.command_queues = {}
             except Exception as e:
                 logger.error(f"Error during module MQTT client cleanup: {e}")

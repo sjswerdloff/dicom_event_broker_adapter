@@ -133,18 +133,107 @@ def mock_dcmread(request):
 
 @pytest.fixture(scope="session", autouse=True)
 def cleanup_zombie_processes():
-    """Ensure any leftover MQTT processes are cleaned up after tests."""
+    """Ensure any leftover processes are cleaned up after tests."""
+    import os
+    import signal
+    import threading
+
+    # Create a flag for cleanup timeout
+    cleanup_completed = threading.Event()
+
+    def timeout_handler():
+        """Handler for cleanup timeout."""
+        if not cleanup_completed.is_set():
+            print("WARNING: Cleanup timed out, forcing exit")
+            # Just return as pytest will handle cleanup after this fixture
+            return
+
+    # By default, skip stopping Mosquitto between tests to avoid interruptions
+    # Set STOP_MOSQUITTO=true to force stop Mosquitto after tests
+    skip_mosquitto_stop = os.environ.get("STOP_MOSQUITTO", "false").lower() != "true"
+
     yield
 
-    # Run Mosquitto stop script to ensure MQTT broker is properly stopped
-    try:
-        subprocess.run(["./scripts/run_mosquitto.sh", "stop"], check=False)
-    except Exception as e:
-        print(f"Error stopping Mosquitto: {e}")
+    # Set a timeout for cleanup operations (5 seconds)
+    timer = threading.Timer(5.0, timeout_handler)
+    timer.daemon = True
+    timer.start()
 
-    # Try to kill any lingering processes
     try:
-        # Find and kill any lingering Python processes that might be MQTT clients
-        subprocess.run("ps -ef | grep mqtt | grep -v grep | awk '{print $2}' | xargs -r kill -9", shell=True, check=False)
-    except Exception as e:
-        print(f"Error cleaning up MQTT processes: {e}")
+        # Run Mosquitto stop script to ensure MQTT broker is properly stopped
+        if not skip_mosquitto_stop:
+            try:
+                print("Stopping Mosquitto broker (STOP_MOSQUITTO=true was set)...")
+                subprocess.run(["./scripts/run_mosquitto.sh", "stop"], check=False, timeout=2)
+            except (subprocess.TimeoutExpired, Exception) as e:
+                print(f"Error stopping Mosquitto: {e}")
+        else:
+            print("Keeping Mosquitto running (default behavior, set STOP_MOSQUITTO=true to change)")
+
+        # Clean up any lingering DICOM or MQTT related processes
+        try:
+            # Reset any global state in the adapter module
+            try:
+                import dicom_event_broker_adapter.ups_event_mqtt_broker_adapter as adapter
+
+                if hasattr(adapter, "mqtt_publishing_client") and adapter.mqtt_publishing_client is not None:
+                    print("Cleaning up global MQTT publishing client...")
+                    try:
+                        adapter.mqtt_publishing_client.loop_stop()
+                        if adapter.mqtt_publishing_client.is_connected():
+                            adapter.mqtt_publishing_client.disconnect()
+                    except Exception as e:
+                        print(f"Error cleaning up MQTT publishing client: {e}")
+                    adapter.mqtt_publishing_client = None
+
+                # Terminate and clean up any subscriber processes
+                if hasattr(adapter, "subscriber_processes") and adapter.subscriber_processes:
+                    print(f"Cleaning up {len(adapter.subscriber_processes)} subscriber processes...")
+                    for process in adapter.subscriber_processes:
+                        try:
+                            if process.is_alive():
+                                process.terminate()
+                                # Use a short timeout to avoid hanging
+                                process.join(timeout=0.5)
+                                # Force kill if still alive
+                                if process.is_alive():
+                                    print(f"Process {process.name} did not terminate gracefully, force killing...")
+                                    import os
+                                    import signal
+
+                                    try:
+                                        os.kill(process.pid, signal.SIGKILL)
+                                    except Exception:
+                                        pass
+                        except Exception as e:
+                            print(f"Error terminating process {process.name}: {e}")
+
+                    adapter.subscriber_processes = []
+                    adapter.subscriber_clients = []
+                    if hasattr(adapter, "command_queues"):
+                        adapter.command_queues = {}
+            except (ImportError, AttributeError) as e:
+                print(f"Could not clean up adapter module state: {e}")
+
+            # Find and kill any lingering Python processes that might be MQTT clients - with timeout
+            print("Killing any lingering MQTT processes...")
+            subprocess.run(
+                "ps -ef | grep mqtt | grep -v grep | awk '{print $2}' | xargs -r kill -9", shell=True, check=False, timeout=1
+            )
+
+            # Find and kill any lingering Python processes that might be DICOM servers - with timeout
+            print("Killing any lingering DICOM processes...")
+            subprocess.run(
+                "ps -ef | grep dicom | grep -v grep | awk '{print $2}' | xargs -r kill -9", shell=True, check=False, timeout=1
+            )
+        except Exception as e:
+            print(f"Error cleaning up processes: {e}")
+
+        print("Session cleanup completed")
+
+    finally:
+        # Signal that cleanup is completed (or timed out)
+        cleanup_completed.set()
+
+        # Cancel the timer if it's still running
+        timer.cancel()

@@ -43,9 +43,16 @@ class TestMQTTIntegration:
         except Exception as e:
             pytest.skip(f"Failed to connect to MQTT broker: {e}")
         finally:
+            # Always stop the client loop first
+            client.loop_stop()
+
+            # Give time for the loop to fully stop
+            time.sleep(0.2)
+
+            # Then disconnect if still connected
             if client.is_connected():
-                client.loop_stop()
                 client.disconnect()
+                print(f"MQTT client {client_id} properly disconnected")
 
     def test_publish_and_receive(self, mqtt_client):
         """Test publishing a message and receiving it."""
