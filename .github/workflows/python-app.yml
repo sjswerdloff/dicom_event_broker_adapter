@@ -97,7 +97,14 @@ jobs:
 
           # Restart mosquitto to use the new config
           echo "Restarting Mosquitto with new config"
-          docker exec ${CONTAINER_ID} sh -c "pkill mosquitto || true"
+          # Don't kill the main process - this would stop the container
+          # Instead, restart the service or use docker restart
+          docker restart ${CONTAINER_ID}
+
+          # Give the container time to restart
+          sleep 5
+
+          # Start mosquitto with the new config file
           docker exec ${CONTAINER_ID} sh -c "mosquitto -c /mosquitto/config/mosquitto.conf -d"
 
           # Wait for Mosquitto to start up
