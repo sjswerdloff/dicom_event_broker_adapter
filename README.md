@@ -15,7 +15,7 @@ Future adapters will hopefully include adaptation for DICOM Web (UPS-RS) and to 
 
 Run the unit tests with:
 
-    poetry run pytest tests --ignore=tests/test_mqtt_integration.py
+    poetry run pytest tests -m "no mqtt_integration"
 
 ### Integration Tests
 
@@ -35,7 +35,7 @@ Integration tests require a running Mosquitto MQTT broker. You can run these tes
 2. Run the integration tests:
 
     ```
-    poetry run pytest tests/test_mqtt_integration.py -v
+    poetry run pytest -m mqtt_integration -v
     ```
 
 3. Stop the Mosquitto broker when done:
