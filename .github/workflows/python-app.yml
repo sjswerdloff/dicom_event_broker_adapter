@@ -72,44 +72,60 @@ jobs:
         # --extend-ignore=203 because black puts in a space before a slicing :
         # while flake8 complains (this warning is not PEP 8 compliant), If W503 pops up, that should be disabled also
         poetry run flake8 --count --extend-ignore=E203 --max-line-length=127 --statistics dicom_event_broker_adapter
-    - name: Create and copy Mosquitto config
+    - name: Copy and verify Mosquitto config
       run: |
-        # Ensure the mosquitto.conf file exists in the workspace
-        mkdir -p ${{ github.workspace }}/tests/config
-        if [ ! -f "${{ github.workspace }}/tests/config/mosquitto.conf" ]; then
-          echo "Creating default mosquitto.conf file"
-          cat > ${{ github.workspace }}/tests/config/mosquitto.conf << 'EOL'
-          listener 1883
-          allow_anonymous true
-          persistence false
-          log_type all
-          EOL
-        fi
-
-        # Get container ID and copy config
+        # Get container ID
         CONTAINER_ID=$(docker ps -q --filter "ancestor=eclipse-mosquitto:2.0")
         echo "Mosquitto container ID: ${CONTAINER_ID}"
 
-        # Create config directory in container
-        docker exec ${CONTAINER_ID} sh -c "mkdir -p /mosquitto/config"
+        # Check if the config file exists in the expected location
+        if [ -f "${{ github.workspace }}/tests/config/mosquitto.conf" ]; then
+          echo "Found mosquitto.conf file, copying to container"
 
-        # Copy the config file
-        docker cp ${{ github.workspace }}/tests/config/mosquitto.conf ${CONTAINER_ID}:/mosquitto/config/
+          # Create config directory in container
+          docker exec ${CONTAINER_ID} sh -c "mkdir -p /mosquitto/config"
 
-        # Verify config was copied
-        echo "Listing config directory:"
-        docker exec ${CONTAINER_ID} ls -la /mosquitto/config/
+          # Copy the config file
+          docker cp ${{ github.workspace }}/tests/config/mosquitto.conf ${CONTAINER_ID}:/mosquitto/config/
 
-        echo "Config file content:"
-        docker exec ${CONTAINER_ID} cat /mosquitto/config/mosquitto.conf
+          # Verify config was copied
+          echo "Listing config directory:"
+          docker exec ${CONTAINER_ID} ls -la /mosquitto/config/
 
-        # Restart mosquitto to use the new config
-        echo "Restarting Mosquitto with new config"
-        docker exec ${CONTAINER_ID} sh -c "pkill mosquitto || true"
-        docker exec ${CONTAINER_ID} sh -c "mosquitto -c /mosquitto/config/mosquitto.conf -d"
+          echo "Config file content:"
+          docker exec ${CONTAINER_ID} cat /mosquitto/config/mosquitto.conf
+
+          # Restart mosquitto to use the new config
+          echo "Restarting Mosquitto with new config"
+          docker exec ${CONTAINER_ID} sh -c "pkill mosquitto || true"
+          docker exec ${CONTAINER_ID} sh -c "mosquitto -c /mosquitto/config/mosquitto.conf -d"
+
+          # Wait for Mosquitto to start up
+          echo "Waiting for Mosquitto to become healthy..."
+          HEALTH_RETRIES=5
+          HEALTH_INTERVAL=2
+
+          for i in $(seq 1 $HEALTH_RETRIES); do
+            echo "Health check attempt $i/$HEALTH_RETRIES..."
+            if docker exec ${CONTAINER_ID} mosquitto_sub -t test/topic -C 1 -E -v; then
+              echo "✅ Mosquitto broker is running and healthy"
+              break
+            fi
+
+            # Check if service is still running
+            if ! docker ps -q --filter "id=${CONTAINER_ID}" | grep -q .; then
+              echo "⚠️ Mosquitto container stopped running"
+              docker logs ${CONTAINER_ID}
+              exit 1
+            fi
+
+            sleep $HEALTH_INTERVAL
+          done
+        else
+          echo "No custom mosquitto.conf found. Using default configuration."
+        fi
 
         # Verify Mosquitto is running
-        sleep 2
         echo "Checking if Mosquitto is running:"
         docker exec ${CONTAINER_ID} sh -c "ps aux | grep mosquitto"
 
