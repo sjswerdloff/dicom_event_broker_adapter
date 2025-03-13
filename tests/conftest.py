@@ -3,8 +3,11 @@ Common fixtures and utilities for tests.
 """
 import json
 import logging
+import os
+import signal
 import socket
 import subprocess
+import threading
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -140,9 +143,6 @@ def mock_dcmread(request):
 @pytest.fixture(scope="session", autouse=True)
 def cleanup_zombie_processes():
     """Ensure any leftover processes are cleaned up after tests."""
-    import os
-    import signal
-    import threading
 
     # Create a flag for cleanup timeout
     cleanup_completed = threading.Event()
@@ -207,7 +207,6 @@ def cleanup_zombie_processes():
                                 if process.is_alive():
                                     print(f"Process {process.name} did not terminate gracefully, force killing...")
                                     import os
-                                    import signal
 
                                     try:
                                         os.kill(process.pid, signal.SIGKILL)
@@ -223,15 +222,6 @@ def cleanup_zombie_processes():
             except (ImportError, AttributeError) as e:
                 print(f"Could not clean up adapter module state: {e}")
 
-            # Comment out aggressive process killing that could terminate pytest or other processes
-            print("WARNING: Skipping aggressive kill of MQTT/DICOM processes that could affect pytest")
-            # subprocess.run(
-            #     "ps -ef | grep mqtt | grep -v grep | awk '{print $2}' | xargs -r kill -9", shell=True, check=False, timeout=1
-            # )
-
-            # subprocess.run(
-            #     "ps -ef | grep dicom | grep -v grep | awk '{print $2}' | xargs -r kill -9", shell=True, check=False, timeout=1
-            # )
         except Exception as e:
             print(f"Error cleaning up processes: {e}")
 

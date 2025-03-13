@@ -124,7 +124,12 @@ class TestMQTTClient:
     @patch("dicom_event_broker_adapter.ups_event_mqtt_broker_adapter.send_event_report")
     @patch("multiprocessing.current_process")
     def test_process_mqtt_message_invalid_topic(self, mock_process, mock_send_event, mqtt_client_mock, test_dataset):
-        """Test processing of MQTT messages with an unknown/invalid topic."""
+        """Test processing of MQTT messages with an unknown/invalid topic.
+
+        Note: This test intentionally generates pydicom validation warnings due to
+        invalid DICOM values derived from the invalid topic structure. These
+        warnings are expected and do not indicate a problem with the test.
+        """
         # Setup mocks
         mock_process.return_value.name = "TEST_AE"
 
@@ -138,6 +143,13 @@ class TestMQTTClient:
         with patch("json.loads", return_value={"test": "data"}):
             with patch("pydicom.Dataset.from_json", return_value=test_dataset):
                 with patch("builtins.print") as mock_print:
+                    # log that warnings are expected
+                    import logging
+
+                    logging.warning(
+                        "EXPECTED WARNINGS: The invalid topic test intentionally generates pydicom validation warnings"
+                    )
+
                     # Call process_mqtt_message with an invalid topic
                     process_mqtt_message(mqtt_client_mock, mock_userdata, mock_msg)
 

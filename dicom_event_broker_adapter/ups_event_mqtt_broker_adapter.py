@@ -27,6 +27,8 @@ from pynetdicom.sop_class import (
 )
 from pynetdicom.transport import ThreadedAssociationServer
 
+from dicom_event_broker_adapter.health_check_mqtt import MQTTHealthChecker
+
 logging.basicConfig()
 
 ADAPTER_AE_TITLE = "UPSEventBroker01"
@@ -47,8 +49,13 @@ action_type_dict = {
     5: "Suspend Global Subscription",
 }
 
+# Health check settings
+health_check_topic_prefix = "health/dicom_broker"
 
 mqtt_publishing_client: mqtt_client.Client = None
+# Health checker instance
+health_checker: Optional[MQTTHealthChecker] = None
+
 
 # Maintain a list of clients by AE Title/name (which will be used for process name and client_id)
 subscriber_clients: List[str] = []
@@ -601,6 +608,7 @@ def start_dimse_server(ae: AE, listening_port: int) -> ThreadedAssociationServer
     ]
     dimse_server = ae.start_server(("0.0.0.0", dimse_port), evt_handlers=handlers, block=False)
     print(f"DIMSE server started on port {dimse_port}")
+
     return dimse_server
 
 
@@ -636,6 +644,14 @@ def main():
         "--server-ae-title", type=str, default=ADAPTER_AE_TITLE, help=f"Server AE title (default: {ADAPTER_AE_TITLE})"
     )
     parser.add_argument("--server-listening-port", type=int, default=11119, help="Server listening port (default: 11119)")
+    parser.add_argument("--health-check-interval", type=int, default=30, help="Health check interval in seconds (default: 30)")
+    parser.add_argument(
+        "--health-check-topic",
+        type=str,
+        default=health_check_topic_prefix,
+        help=f"Health check topic prefix (default: {health_check_topic_prefix})",
+    )
+    parser.add_argument("--disable-health-check", action="store_true", help="Disable the health check system")
     args = parser.parse_args()
     # Use the parsed arguments
     broker_address = args.broker_address
@@ -647,7 +663,7 @@ def main():
     print(f"Broker port: {broker_port}")
     print(f"Server AE title: {server_ae_title}")
     print(f"Server listening port: {server_listening_port}")
-    # known_aes = load_ae_config()
+    print(f"Health check topic: {args.health_check_topic}")
     mqtt_publishing_client = mqtt_client.Client(mqtt_client.CallbackAPIVersion.VERSION2, client_id=server_ae_title)
     mqtt_publishing_client.on_connect = on_connect
     mqtt_publishing_client.on_disconnect = on_disconnect
@@ -663,6 +679,17 @@ def main():
     server_application_entity = AE(server_ae_title)
     dimse_server = start_dimse_server(ae=server_application_entity, listening_port=server_listening_port)
     print(f"DICOM Server running on: {dimse_server.server_address}")
+    # Start health check if not disabled
+    if not args.disable_health_check:
+        health_checker = MQTTHealthChecker(
+            mqtt_client=mqtt_publishing_client,
+            dimse_server=dimse_server,
+            check_interval=args.health_check_interval,
+            topic_prefix=args.health_check_topic,
+            qos=1,
+            retained=True,
+        )
+        health_checker.start()
     run_forever = True
     while run_forever:
         time.sleep(1)
@@ -670,6 +697,10 @@ def main():
     # Terminate all child processes
     for process in subscriber_processes:
         process.terminate()
+
+    # Stop health checker if active
+    if health_checker is not None:
+        health_checker.stop()
 
     # Wait for all processes to complete
     for process in subscriber_processes:

@@ -12,13 +12,13 @@ python = ">=3.10,<3.13"
 paho-mqtt = "^2.1.0"
 pydicom = "^2.4.4"
 pynetdicom = "^2.1.1"
-tdwii_plus_examples = {git = "https://github.com/sjswerdloff/tdwii_plus_examples.git"}
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.2"
 black = "^24.8.0"
 isort = "^5.13.2"
 flake8 = "^7.1.1"
+tdwii_plus_examples = {git = "https://github.com/sjswerdloff/tdwii_plus_examples.git"}
 
 [tool.poetry.scripts]
 dicom_event_broker_adapter = "dicom_event_broker_adapter.ups_event_mqtt_broker_adapter:main"
