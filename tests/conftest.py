@@ -3,7 +3,6 @@ Common fixtures and utilities for tests.
 """
 import json
 import logging
-import os
 import signal
 import socket
 import subprocess
@@ -154,6 +153,8 @@ def cleanup_zombie_processes():
             # Just return as pytest will handle cleanup after this fixture
             return
 
+    import os  # without this, even though it was imported at the top, unbound error
+
     # By default, skip stopping Mosquitto between tests to avoid interruptions
     # Set STOP_MOSQUITTO=true to force stop Mosquitto after tests
     skip_mosquitto_stop = os.environ.get("STOP_MOSQUITTO", "false").lower() != "true"
@@ -206,7 +207,7 @@ def cleanup_zombie_processes():
                                 # Force kill if still alive
                                 if process.is_alive():
                                     print(f"Process {process.name} did not terminate gracefully, force killing...")
-                                    import os
+                                    import os  # without this, even if imported at the top unbound error on os.kill
 
                                     try:
                                         os.kill(process.pid, signal.SIGKILL)
