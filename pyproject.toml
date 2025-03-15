@@ -10,7 +10,7 @@ dependencies = [
     "paho-mqtt>=2.1.0,<3",
     "pydicom>=2.4.4,<3",
     "pynetdicom>=2.1.1,<3",
-    "tdwii_plus_examples",
+
 ]
 
 [project.scripts]
@@ -20,6 +20,7 @@ dicom_event_broker_adapter = "dicom_event_broker_adapter.ups_event_mqtt_broker_a
 dev = [
     "pytest>=8.3.2,<9",
     "ruff>=0.11.0,<0.12",
+    "tdwii_plus_examples",
 ]
 
 [tool.uv]

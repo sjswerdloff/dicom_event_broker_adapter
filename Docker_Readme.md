@@ -21,7 +21,7 @@ project/
 │   ├── __init__.py
 │   └── ups_event_mqtt_broker_adapter.py
 ├── pyproject.toml
-├── poetry.lock
+├── uv.lock
 ├── README.md
 ├── tests/
 │   └── config/
