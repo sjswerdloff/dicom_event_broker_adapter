@@ -153,11 +153,9 @@ if __name__ == "__main__":
 
     # Wait for messages to arrive
     start_time = time.time()
-    while time.time() - start_time < args.timeout:
-        # Check if we've received status messages
-        if f"{args.topic_prefix}/status" in received_messages:
-            break
+    while time.time() - start_time < args.timeout and not f"{args.topic_prefix}/status" in received_messages:
         time.sleep(0.1)
+
 
     # Print received statuses
     if not received_messages:
