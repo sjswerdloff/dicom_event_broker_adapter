@@ -190,7 +190,6 @@ class MQTTHealthChecker:
                     self._publish_status()
                 except Exception as e:
                     logger.error(f"Error in trying to update health status to error! {e}")
-                    pass
                 time.sleep(5)  # Sleep a bit before retrying
 
     def _check_mqtt(self):
