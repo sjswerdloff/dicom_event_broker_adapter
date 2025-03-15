@@ -1,0 +1,29 @@
+
+services:
+  dicom-broker-adapter:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "11119:11119"
+    volumes:
+      - ./ApplicationEntities.json:/app/ApplicationEntities.json
+      # Add any other configuration files you might need
+    # Environment variables can be added here
+    environment:
+      - TZ=UTC
+    # You can override the default command if needed
+    # command: ["--broker-address", "mqtt-broker", "--broker-port", "1883", "--server-listening-port", "11119"]
+    restart: unless-stopped
+
+  # Optionally include a pre-configured MQTT broker
+  mqtt-broker:
+    image: eclipse-mosquitto:latest
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./tests/config/mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log
+    restart: unless-stopped
