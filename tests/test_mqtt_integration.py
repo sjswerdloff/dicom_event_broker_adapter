@@ -3,7 +3,6 @@
 import time
 
 import pytest
-from conftest import mqtt_integration
 from paho.mqtt import client as mqtt_client
 
 from dicom_event_broker_adapter.ups_event_mqtt_broker_adapter import _construct_mqtt_topic

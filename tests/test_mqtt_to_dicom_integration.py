@@ -5,17 +5,13 @@ import time
 from unittest.mock import MagicMock, patch
 
 import pytest
-from conftest import mqtt_integration
 from paho.mqtt import client as mqtt_client
 from pydicom import Dataset
-from pynetdicom import AE, evt
 from pynetdicom.sop_class import UnifiedProcedureStepPush
 
 from dicom_event_broker_adapter.ups_event_mqtt_broker_adapter import (
     ADAPTER_AE_TITLE,
     _construct_mqtt_topic,
-    handle_dimse_n_event,
-    send_event_report,
 )
 
 
