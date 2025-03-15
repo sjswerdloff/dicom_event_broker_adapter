@@ -103,7 +103,7 @@ def colorize_status(status):
         return f"{GREEN}{status}{NC}"
     elif status == "degraded":
         return f"{YELLOW}{status}{NC}"
-    elif status == "error" or status == "offline":
+    elif status in ["error", "offline"]:
         return f"{RED}{status}{NC}"
     else:
         return status
