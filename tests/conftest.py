@@ -1,6 +1,7 @@
 """
 Common fixtures and utilities for tests.
 """
+
 import json
 import logging
 import signal

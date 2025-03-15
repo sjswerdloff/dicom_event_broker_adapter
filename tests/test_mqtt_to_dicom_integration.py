@@ -9,7 +9,10 @@ from paho.mqtt import client as mqtt_client
 from pydicom import Dataset
 from pynetdicom.sop_class import UnifiedProcedureStepPush
 
-from dicom_event_broker_adapter.ups_event_mqtt_broker_adapter import ADAPTER_AE_TITLE, _construct_mqtt_topic
+from dicom_event_broker_adapter.ups_event_mqtt_broker_adapter import (
+    ADAPTER_AE_TITLE,
+    _construct_mqtt_topic,
+)
 
 
 @pytest.mark.mqtt_integration

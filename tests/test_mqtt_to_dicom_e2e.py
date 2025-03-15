@@ -175,7 +175,7 @@ class TestMQTTToDICOME2E:
                         logger.debug("Server thread stopped successfully")
                         break
                     elif attempt < max_attempts - 1:
-                        logger.warning(f"Server thread still alive after join attempt {attempt+1}, retrying...")
+                        logger.warning(f"Server thread still alive after join attempt {attempt + 1}, retrying...")
                     else:
                         logger.warning("Server thread did not terminate properly after multiple attempts")
                         # Thread is daemon so it won't prevent pytest from exiting
@@ -283,7 +283,7 @@ class TestMQTTToDICOME2E:
                 time.sleep(0.5)
                 wait_count += 1
                 if wait_count % 4 == 0:  # Log every 2 seconds
-                    logger.debug(f"Still waiting for DICOM event... ({wait_count/2}s elapsed)")
+                    logger.debug(f"Still waiting for DICOM event... ({wait_count / 2}s elapsed)")
 
                     # Try to debug what's happening - check if the DICOM association is being formed
                     from pynetdicom import debug_logger
@@ -525,7 +525,7 @@ class TestMQTTToDICOME2E:
                         time.sleep(0.5)
                         wait_count += 1
                         if wait_count % 4 == 0:  # Log every 2 seconds
-                            logger.debug(f"Still waiting for DICOM event... ({wait_count/2}s elapsed)")
+                            logger.debug(f"Still waiting for DICOM event... ({wait_count / 2}s elapsed)")
 
                     # Verify the SCP received the event
                     if not ups_scp_server["received_events"]:
