@@ -724,4 +724,4 @@ style = "1.1.0"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<3.13"
-content-hash = "70edd8424aeef5c1104ed98badbd6843c9a9fc38dfb676ceeb101dd15feb8d35"
+content-hash = "57b35096f3fdf83c1c800d6989a230b5a038acbf3de2259fc2e1b5671b462b63"
