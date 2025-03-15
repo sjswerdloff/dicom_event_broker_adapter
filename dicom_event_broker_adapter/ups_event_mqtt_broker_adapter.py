@@ -95,7 +95,7 @@ def on_connect(
     client: mqtt_client.Client, userdata: Any, flags: Dict[str, int], rc: int, properties: mqtt_properties = None
 ) -> None:
     print("Connected!")
-    print(f"Process {multiprocessing.current_process().name}: " f"Connected with result code {rc} and properties {properties}")
+    print(f"Process {multiprocessing.current_process().name}: Connected with result code {rc} and properties {properties}")
 
 
 def on_disconnect(client: mqtt_client.Client, userdata: Any, rc: int, properties: mqtt_properties = None) -> None:
@@ -111,8 +111,7 @@ def on_disconnect(client: mqtt_client.Client, userdata: Any, rc: int, properties
     if rc != 0:
         # This is an unexpected disconnection - try to reconnect
         print(
-            f"Process {multiprocessing.current_process().name}: "
-            f"Unexpected disconnection (rc={rc}). Attempting to reconnect..."
+            f"Process {multiprocessing.current_process().name}: Unexpected disconnection (rc={rc}). Attempting to reconnect..."
         )
         try:
             client.reconnect()

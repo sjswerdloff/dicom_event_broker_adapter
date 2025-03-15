@@ -1,6 +1,7 @@
 """
 Common fixtures and utilities for tests.
 """
+
 import json
 import logging
 import socket
@@ -223,15 +224,6 @@ def cleanup_zombie_processes():
             except (ImportError, AttributeError) as e:
                 print(f"Could not clean up adapter module state: {e}")
 
-            # Comment out aggressive process killing that could terminate pytest or other processes
-            print("WARNING: Skipping aggressive kill of MQTT/DICOM processes that could affect pytest")
-            # subprocess.run(
-            #     "ps -ef | grep mqtt | grep -v grep | awk '{print $2}' | xargs -r kill -9", shell=True, check=False, timeout=1
-            # )
-
-            # subprocess.run(
-            #     "ps -ef | grep dicom | grep -v grep | awk '{print $2}' | xargs -r kill -9", shell=True, check=False, timeout=1
-            # )
         except Exception as e:
             print(f"Error cleaning up processes: {e}")
 

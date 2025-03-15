@@ -19,6 +19,7 @@ pytest = "^8.3.2"
 black = "^24.8.0"
 isort = "^5.13.2"
 flake8 = "^7.1.1"
+ruff = "*"
 
 [tool.poetry.scripts]
 dicom_event_broker_adapter = "dicom_event_broker_adapter.ups_event_mqtt_broker_adapter:main"
@@ -37,3 +38,15 @@ line_length = 127
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 127
+
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+]
