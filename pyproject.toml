@@ -1,6 +1,6 @@
 [project]
 name = "dicom_event_broker_adapter"
-version = "0.3.0"
+version = "0.3.1"
 description = "DICOM DIMSE UPS Event to MQTT Broker Adapter"
 authors = [{ name = "Stuart Swerdloff", email = "sjswerdloff@gmail.com" }]
 requires-python = ">=3.10,<3.13"
