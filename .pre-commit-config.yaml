@@ -21,18 +21,15 @@ repos:
 
       - id: ruff-format
         types: [python]
-  - repo: local
-    hooks:
-    - id: uv-compile-requirements
-      name: Generate requirements.txt file
-      language: python
-      entry: python -c "import subprocess; subprocess.run(['uv', 'pip', 'compile', 'pyproject.toml', '-o', 'requirements.txt'])"
-      files: ^pyproject\.toml$|^uv\.lock$
-      pass_filenames: false
 
-    - id: uv-compile-dev-requirements
-      name: Generate requirements-dev.txt file
-      language: python
-      entry: python -c "import subprocess; subprocess.run(['uv', 'pip', 'compile', 'pyproject.toml', '--extra', 'dev', '-o', 'requirements-dev.txt'])"
-      files: ^pyproject\.toml$|^uv\.lock$
-      pass_filenames: false
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    # uv version.
+    rev: 0.6.6
+    hooks:
+      - id: uv-lock
+
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    # uv version.
+    rev: 0.6.6
+    hooks:
+      - id: uv-export
