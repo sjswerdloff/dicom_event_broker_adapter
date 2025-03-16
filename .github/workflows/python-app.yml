@@ -42,8 +42,8 @@ jobs:
 
     - name: Check if lock file is in sync
       run: |
-        if ! uv pip compile --check; then
-          echo "::error::uv.lock is out of sync with pyproject.toml. Please run 'uv pip compile' locally and commit the updated lock file."
+        if ! uv lock --check; then
+          echo "::error::uv.lock is out of sync with pyproject.toml. Please run 'uv lock' locally and commit the updated lock file."
           exit 1
         fi
 
