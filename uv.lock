@@ -13,7 +13,7 @@ wheels = [
 
 [[package]]
 name = "dicom-event-broker-adapter"
-version = "0.2.0"
+version = "0.3.2"
 source = { editable = "." }
 dependencies = [
     { name = "paho-mqtt" },
@@ -21,7 +21,7 @@ dependencies = [
     { name = "pynetdicom" },
 ]
 
-[package.dev-dependencies]
+[package.optional-dependencies]
 dev = [
     { name = "pytest" },
     { name = "ruff" },
@@ -33,14 +33,11 @@ requires-dist = [
     { name = "paho-mqtt", specifier = ">=2.1.0,<3" },
     { name = "pydicom", specifier = ">=2.4.4,<3" },
     { name = "pynetdicom", specifier = ">=2.1.1,<3" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.3.2,<9" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.11.0,<0.12" },
+    { name = "tdwii-plus-examples", marker = "extra == 'dev'", git = "https://github.com/sjswerdloff/tdwii_plus_examples.git" },
 ]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "pytest", specifier = ">=8.3.2,<9" },
-    { name = "ruff", specifier = ">=0.11.0,<0.12" },
-    { name = "tdwii-plus-examples", git = "https://github.com/sjswerdloff/tdwii_plus_examples.git" },
-]
+provides-extras = ["dev"]
 
 [[package]]
 name = "exceptiongroup"
