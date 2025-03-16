@@ -21,8 +21,18 @@ repos:
 
       - id: ruff-format
         types: [python]
-  - repo: https://github.com/floatingpurr/sync_with_poetry
-    rev: 1.2.0
+  - repo: local
     hooks:
-      - id: sync_with_poetry
-        args: [] # optional args
+      - id: uv-export-requirements
+        name: Export UV dependencies to requirements files
+        language: python
+        entry: python -c "import subprocess; subprocess.run(['uv', 'pip', 'export', '-r', 'uv.lock', '--only-packages', '--all-extras', '-o', 'requirements.txt'])"
+        files: ^pyproject\.toml$|^uv\.lock$
+        pass_filenames: false
+
+      - id: uv-export-dev-requirements
+        name: Export UV dev dependencies
+        language: python
+        entry: python -c "import subprocess; subprocess.run(['uv', 'pip', 'export', '-r', 'uv.lock', '--only-packages', '--extra', 'dev', '-o', 'requirements-dev.txt'])"
+        files: ^pyproject\.toml$|^uv\.lock$
+        pass_filenames: false
