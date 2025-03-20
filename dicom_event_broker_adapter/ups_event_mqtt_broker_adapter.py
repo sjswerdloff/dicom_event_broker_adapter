@@ -4,6 +4,7 @@ import logging
 import multiprocessing
 import os
 import textwrap
+import threading
 import time
 from multiprocessing import Process, Queue
 from pathlib import Path
@@ -251,9 +252,27 @@ def mqtt_client_process(process_name: str, broker: str, port: int, command_queue
                     client.unsubscribe(current_topic)
                 current_topic = command["topic"]
                 if current_topic:
+                    # Create a subscription confirmation event
+                    subscription_complete = threading.Event()
+                    
+                    def on_subscribe_callback(client, userdata, mid, granted_qos, properties=None):
+                        subscription_complete.set()
+                    
+                    # Set up the callback temporarily
+                    previous_on_subscribe = client.on_subscribe
+                    client.on_subscribe = on_subscribe_callback
+                    
+                    # Subscribe to the topic
                     client.subscribe(current_topic)
-                    print(f"Process {process_name}: Subscribed to {current_topic}")
-                    time.sleep(0.5)  # Allow subscription to complete
+                    print(f"Process {process_name}: Subscribing to {current_topic}")
+                    
+                    # Wait for subscription to complete with a timeout
+                    subscription_complete.wait(timeout=1.0)
+                    
+                    # Restore the previous callback if there was one
+                    client.on_subscribe = previous_on_subscribe
+                    
+                    print(f"Process {process_name}: Subscription to {current_topic} complete")
             elif command["action"] == "unsubscribe":
                 if current_topic:
                     client.unsubscribe(current_topic)
@@ -561,17 +580,32 @@ def handle_dimse_n_event(event: Event):
 def register_subscriber(ae_title, topic):
     client_name = ae_title
     if ae_title not in subscriber_clients:
+        # Create a pipe to signal when the process is ready
+        process_ready = threading.Event()
         command_queues[client_name] = Queue()
-        process = Process(
-            target=mqtt_client_process,
-            args=(client_name, broker_address, broker_port, command_queues[client_name]),
-            name=client_name,
-        )
+        
+        # We'll use a wrapper function to signal when the process is ready
+        def process_wrapper():
+            try:
+                # Set the process name manually since we're using a wrapper
+                multiprocessing.current_process().name = client_name
+                # Signal that the process has started
+                process_ready.set()
+                # Run the actual process function
+                mqtt_client_process(client_name, broker_address, broker_port, command_queues[client_name])
+            except Exception as e:
+                print(f"Error in process {client_name}: {str(e)}")
+                
+        process = Process(target=process_wrapper)
         subscriber_processes.append(process)
         subscriber_clients.append(ae_title)
         process.start()
         print(f"Registered subscriber: {ae_title} and started process for it")
-        time.sleep(2)
+        
+        # Wait for the process to signal it's ready with a timeout
+        if not process_ready.wait(timeout=3):
+            print(f"Warning: Process {client_name} did not signal readiness within timeout")
+    
     if topic is None:
         topic = "/workitems/#"
     else:
