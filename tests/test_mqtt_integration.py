@@ -84,7 +84,7 @@ class TestMQTTIntegration:
         """Test constructing a topic for a workitem."""
         # Arrange
         import threading
-        
+
         received_messages = []
         message_received = threading.Event()
         event_type = "Workitem"
@@ -103,7 +103,7 @@ class TestMQTTIntegration:
         # Act
         topic = _construct_mqtt_topic(event_type=event_type, workitem_uid=workitem_uid, workitem_subtopic=workitem_subtopic)
         result = mqtt_client.publish(topic, test_message)
-        
+
         # Wait for message to be received with timeout
         message_received.wait(timeout=1)
 
