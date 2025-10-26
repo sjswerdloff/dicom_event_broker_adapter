@@ -7,15 +7,29 @@ Future adapters will hopefully include adaptation for DICOM Web (UPS-RS) and to 
 
 ## Installation
 
-    poetry install
+Install uv (if not already installed):
+```
+pip install uv
+```
+
+Then install the project dependencies:
+```
+uv sync
+```
+
+To run the application in development mode:
+```
+uv run dicom_event_broker_adapter
+```
 
 ## Testing
 
 ### Unit Tests
 
 Run the unit tests with:
-
-    poetry run pytest tests -m "no mqtt_integration"
+```
+uv run pytest tests -m "no mqtt_integration"
+```
 
 ### Integration Tests
 
@@ -35,7 +49,7 @@ Integration tests require a running Mosquitto MQTT broker. You can run these tes
 2. Run the integration tests:
 
     ```
-    poetry run pytest -m mqtt_integration -v
+    uv run pytest -m mqtt_integration -v
     ```
 
 3. Stop the Mosquitto broker when done:
@@ -52,7 +66,7 @@ Integration tests require a running Mosquitto MQTT broker. You can run these tes
 
 If Mosquitto is running, the following command will execute all tests (both unit and integration). If Mosquitto is not running, only the unit tests will be executed:
 
-    poetry run pytest tests
+    uv run pytest tests
 
 ## Command-Line Interface
 

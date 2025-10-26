@@ -1,20 +1,19 @@
 # DICOM Event Broker Adapter Development Guide
 
 ## Commands
-- Install dependencies: `poetry install`
-- Run unit tests: `poetry run pytest tests -m "no mqtt_integration"`
-- Run integration tests: `poetry run pytest -m mqtt_integration -v`
-- Run tests with specific marker: `poetry run pytest -m mqtt_integration`
-- Run all tests: `poetry run pytest tests`
-- Run specific test: `poetry run pytest tests/test_file.py::TestClass::test_method`
-- Lint code: `poetry run flake8 dicom_event_broker_adapter`
-- Format code: `poetry run black dicom_event_broker_adapter`
-- Sort imports: `poetry run isort dicom_event_broker_adapter`
+- Install dependencies: `uv sync`
+- Run unit tests: `uv run pytest tests -m "no mqtt_integration"`
+- Run integration tests: `uv run pytest -m mqtt_integration -v`
+- Run tests with specific marker: `uv run pytest -m mqtt_integration`
+- Run all tests: `uv run pytest tests`
+- Run specific test: `uv run pytest tests/test_file.py::TestClass::test_method`
+- Lint code: `uv run ruff check dicom_event_broker_adapter`
+- Format code: `uv run ruff format dicom_event_broker_adapter`
 - Start Mosquitto for testing: `./scripts/run_mosquitto.sh start`
 - Stop Mosquitto after testing: `./scripts/run_mosquitto.sh stop`
 
 ## Code Style
-- Follow Black formatting (line length: 127)
+- Follow Ruff formatting (line length: 127)
 - Use type hints for all function parameters and return values
 - Follow snake_case naming for variables and functions
 - Use descriptive docstrings for modules, classes, and functions
