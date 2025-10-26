@@ -28,7 +28,7 @@ uv run dicom_event_broker_adapter
 
 Run the unit tests with:
 ```
-uv run pytest tests -m "no mqtt_integration"
+uv run pytest tests -m "not mqtt_integration"
 ```
 
 ### Integration Tests

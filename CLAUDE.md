@@ -2,7 +2,7 @@
 
 ## Commands
 - Install dependencies: `uv sync`
-- Run unit tests: `uv run pytest tests -m "no mqtt_integration"`
+- Run unit tests: `uv run pytest tests -m "not mqtt_integration"`
 - Run integration tests: `uv run pytest -m mqtt_integration -v`
 - Run tests with specific marker: `uv run pytest -m mqtt_integration`
 - Run all tests: `uv run pytest tests`
