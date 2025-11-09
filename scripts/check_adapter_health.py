@@ -156,7 +156,6 @@ if __name__ == "__main__":
     while time.time() - start_time < args.timeout and f"{args.topic_prefix}/status" not in received_messages:
         time.sleep(0.1)
 
-
     # Print received statuses
     if not received_messages:
         print(f"{RED}No health status messages received within timeout.{NC}")

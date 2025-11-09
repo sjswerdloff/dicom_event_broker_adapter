@@ -204,10 +204,10 @@ MQTT wildcards (`+` and `#`) enable powerful filtering without custom applicatio
 
 ### Phase 1: Enhance Topic Construction
 
-Modify `_construct_mqtt_topic()` in `ups_event_mqtt_broker_adapter.py`:
+Modify `construct_mqtt_topic()` in `ups_event_mqtt_broker_adapter.py`:
 
 ```python
-def _construct_mqtt_topic(
+def construct_mqtt_topic(
     event_type,
     subscription_type: Optional[str] = None,
     workitem_uid: Optional[UID] = None,
@@ -298,7 +298,7 @@ def handle_n_action(event: Event):
     station_ae = _extract_station_ae(action_information)
     patient_id = _extract_patient_id(action_information)
 
-    topic = _construct_mqtt_topic(
+    topic = construct_mqtt_topic(
         event_type=mqtt_event_type,
         subscription_type=subscription_type,
         workitem_uid=workitem_uid,
@@ -313,11 +313,11 @@ def handle_n_action(event: Event):
 
 ### Phase 5: Update Tests
 
-Add test cases in `test_construct_mqtt_topic.py`:
+Add test cases in `testconstruct_mqtt_topic.py`:
 
 ```python
 def test_enhanced_topic_with_all_attributes():
-    result = _construct_mqtt_topic(
+    result = construct_mqtt_topic(
         event_type="Workitem",
         workitem_uid="1.2.3.4.5",
         workitem_subtopic="state",
@@ -328,7 +328,7 @@ def test_enhanced_topic_with_all_attributes():
     assert result == "workitems/LINAC_01/PAT12345/treatment_delivery/1.2.3.4.5/state"
 
 def test_enhanced_topic_with_wildcards():
-    result = _construct_mqtt_topic(
+    result = construct_mqtt_topic(
         event_type="Workitem",
         subscription_type="FilteredWorklist",
         station_ae_title="LINAC_01",

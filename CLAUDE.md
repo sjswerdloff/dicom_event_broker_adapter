@@ -22,4 +22,18 @@
 - Follow pytest patterns for testing with fixtures in conftest.py
 - Make use of pynetdicom and paho-mqtt idioms where appropriate
 
-This is a Python package that bridges DICOM UPS events to MQTT messaging. Tests rely heavily on mocking of DICOM objects and MQTT clients.
+## Modular Structure
+The code has been refactored into the following modules:
+- `config.py` - Configuration loading and management
+- `mqtt_client.py` - MQTT client implementation and management
+- `dimse_server.py` - DICOM DIMSE server implementation
+- `event_processor.py` - Event processing and routing logic
+- `subscriber_manager.py` - Subscriber registration and management
+- `health_check.py` - Health check functionality
+- `command_interface.py` - Command processing interface
+- `main.py` - Main application entry point
+
+## Testing
+Unit tests should focus on individual modules. Integration tests verify the complete flow between DICOM DIMSE events and MQTT messages. Tests rely heavily on mocking of DICOM objects and MQTT clients.
+
+This is a Python package that bridges DICOM UPS events to MQTT messaging through a modular architecture.
