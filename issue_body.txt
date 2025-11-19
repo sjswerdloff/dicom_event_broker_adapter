@@ -1,0 +1,35 @@
+## Pull Request Details
+
+### Problem
+The current implementation of the test includes a hardcoded time.sleep(0.5) call, which can make the test brittle and slow. Fixed delay timeouts are unreliable and can cause flaky tests.
+
+### Solution
+Replaced hardcoded time.sleep() calls with threading.Event() for better synchronization in tests and MQTT subscription processes. This approach allows the tests to proceed as soon as the expected event occurs, without waiting for an arbitrary amount of time.
+
+### Changes Made
+1. In `test_mqtt_integration.py`:
+   - Added threading.Event() to signal when a message is received
+   - Replace time.sleep(0.5) with message_received.wait(timeout=1)
+
+2. In `ups_event_mqtt_broker_adapter.py`:
+   - Added threading module import
+   - Replaced hardcoded time.sleep in process_commands with event-based subscription confirmation
+   - Enhanced register_subscriber to use an event for process ready notification instead of time.sleep(2)
+
+### Benefits
+- More reliable tests with fewer false negatives
+- Faster test execution (no waiting for full timeout when events happen quickly)
+- Better handling of subscription process with proper signal handling
+
+### Test Plan
+Tests should run more reliably with this change since they now wait for actual events rather than arbitrary timeouts.
+
+### Branch
+The changes have been committed to the branch `claude-fix-20250320051952`.
+
+```bash
+git checkout claude-fix-20250320051952
+git push origin claude-fix-20250320051952
+```
+
+Then create a pull request from this branch to the main branch.

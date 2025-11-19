@@ -83,7 +83,10 @@ class TestMQTTIntegration:
     def test_construct_topic_for_workitem(self, mqtt_client):
         """Test constructing a topic for a workitem."""
         # Arrange
+        import threading
+
         received_messages = []
+        message_received = threading.Event()
         event_type = "Workitem"
         workitem_uid = "1.2.3.4.5"
         workitem_subtopic = "state"
@@ -92,6 +95,7 @@ class TestMQTTIntegration:
 
         def on_message(client, userdata, msg, properties=None):
             received_messages.append({"topic": msg.topic, "payload": msg.payload.decode()})
+            message_received.set()
 
         mqtt_client.subscribe("/workitems/#")
         mqtt_client.on_message = on_message
@@ -100,8 +104,8 @@ class TestMQTTIntegration:
         topic = _construct_mqtt_topic(event_type=event_type, workitem_uid=workitem_uid, workitem_subtopic=workitem_subtopic)
         result = mqtt_client.publish(topic, test_message)
 
-        # Allow time for message to be received
-        time.sleep(0.5)
+        # Wait for message to be received with timeout
+        message_received.wait(timeout=1)
 
         # Assert
         assert topic == expected_topic
