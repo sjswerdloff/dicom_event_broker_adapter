@@ -67,6 +67,7 @@ class TestMainModule:
         # Mock time.sleep to raise KeyboardInterrupt to exit the main loop
         # Need to handle multiple sleep calls: initial 2-second sleep + loop sleep
         call_count = 0
+
         def sleep_side_effect(duration):
             nonlocal call_count
             call_count += 1
@@ -74,7 +75,7 @@ class TestMainModule:
                 return  # Just return normally
             else:  # Second call onwards - main loop sleep (duration=1)
                 raise KeyboardInterrupt()  # Exit the main loop
-        
+
         mock_time_sleep.side_effect = sleep_side_effect
 
         # Act & Assert
@@ -113,7 +114,7 @@ class TestMainModule:
 
     @patch("builtins.print")
     @patch("sys.exit")
-    @patch("time.sleep") 
+    @patch("time.sleep")
     @patch("pynetdicom.AE")
     @patch("dicom_event_broker_adapter.dimse_server.start_dimse_server")
     @patch("dicom_event_broker_adapter.mqtt_client.initialize_mqtt_publisher")
@@ -156,6 +157,7 @@ class TestMainModule:
 
         # Mock time.sleep to raise KeyboardInterrupt to exit the main loop
         call_count = 0
+
         def sleep_side_effect(duration):
             nonlocal call_count
             call_count += 1
@@ -163,7 +165,7 @@ class TestMainModule:
                 return  # Just return normally
             else:  # Second call onwards - main loop sleep (duration=1)
                 raise KeyboardInterrupt()  # Exit the main loop
-        
+
         mock_time_sleep.side_effect = sleep_side_effect
 
         # Act & Assert
