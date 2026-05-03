@@ -7,15 +7,29 @@ Future adapters will hopefully include adaptation for DICOM Web (UPS-RS) and to 
 
 ## Installation
 
-    poetry install
+Install uv (if not already installed):
+```
+pip install uv
+```
+
+Then install the project dependencies:
+```
+uv sync
+```
+
+To run the application in development mode:
+```
+uv run dicom_event_broker_adapter
+```
 
 ## Testing
 
 ### Unit Tests
 
 Run the unit tests with:
-
-    poetry run pytest tests -m "no mqtt_integration"
+```
+uv run pytest tests -m "not mqtt_integration"
+```
 
 ### Integration Tests
 
@@ -35,7 +49,7 @@ Integration tests require a running Mosquitto MQTT broker. You can run these tes
 2. Run the integration tests:
 
     ```
-    poetry run pytest -m mqtt_integration -v
+    uv run pytest -m mqtt_integration -v
     ```
 
 3. Stop the Mosquitto broker when done:
@@ -52,7 +66,7 @@ Integration tests require a running Mosquitto MQTT broker. You can run these tes
 
 If Mosquitto is running, the following command will execute all tests (both unit and integration). If Mosquitto is not running, only the unit tests will be executed:
 
-    poetry run pytest tests
+    uv run pytest tests
 
 ## Command-Line Interface
 
@@ -80,6 +94,9 @@ You can customize the adapter's behavior using the following command-line option
 - `--broker-port`: Set the MQTT broker port (default: 1883)
 - `--server-ae-title`: Set the Server AE title (default: UPSEventBroker01)
 - `--server-listening-port`: Set the Server listening port (default: 11119)
+- `--health-check-interval`: Set the health check interval in seconds (default: 30)
+- `--health-check-topic`: Set the health check topic prefix (default: health/dicom_broker)
+- `--disable-health-check`: Disable the health check system
 
 ### Examples
 
@@ -98,6 +115,11 @@ You can customize the adapter's behavior using the following command-line option
    dicom_event_broker_adapter --broker-address mqtt.example.com --broker-port 8883 --server-ae-title CustomAE --server-listening-port 11121
    ```
 
+4. Disabling health checks:
+   ```
+   dicom_event_broker_adapter --disable-health-check
+   ```
+
 ### Viewing Help
 
 To see all available options and their descriptions, use the `--help` flag:
@@ -111,6 +133,3 @@ This will display a help message with a description of the adapter and all avail
 ### Note
 
 Make sure you have the necessary DICOM configuration in place, including the `ApplicationEntities.json` file in your working directory, before running the adapter. This file should contain the necessary information about the Application Entities that the adapter will interact with.
-If you did not use poetry install, but have cloned the repository, the command line is
-
-python dicom_event_broker_adapter/ups_event_mqtt_broker_adapter.py

@@ -136,7 +136,7 @@ def mock_dcmread(request):
     # Create a JSON serializable version for to_json mock
     dataset.to_json = MagicMock(return_value=json.dumps({"test": "data"}))
 
-    with patch("dicom_event_broker_adapter.ups_event_mqtt_broker_adapter.dcmread", return_value=dataset) as mock:
+    with patch("pydicom.dcmread", return_value=dataset) as mock:
         yield mock
 
 
@@ -184,7 +184,7 @@ def cleanup_zombie_processes():
         try:
             # Reset any global state in the adapter module
             try:
-                import dicom_event_broker_adapter.ups_event_mqtt_broker_adapter as adapter
+                import dicom_event_broker_adapter.config as adapter
 
                 if hasattr(adapter, "mqtt_publishing_client") and adapter.mqtt_publishing_client is not None:
                     print("Cleaning up global MQTT publishing client...")

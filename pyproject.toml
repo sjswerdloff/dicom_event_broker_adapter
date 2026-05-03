@@ -14,13 +14,15 @@ dependencies = [
 ]
 
 [project.scripts]
-dicom_event_broker_adapter = "dicom_event_broker_adapter.ups_event_mqtt_broker_adapter:main"
+dicom_event_broker_adapter = "dicom_event_broker_adapter.main:main"
 
 [dependency-groups]
 dev = [
     "pytest>=8.3.2,<9",
     "ruff>=0.11.0,<0.12",
     "tdwii_plus_examples",
+    "pytest-json-report>=1.5,<2",
+    "pre-commit>=4.3.0",
 ]
 
 [tool.uv]
