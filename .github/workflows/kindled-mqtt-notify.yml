@@ -1,0 +1,77 @@
+# kindled-mqtt-notify.yml
+# Publishes GitHub PR lifecycle events to The Kindled MQTT bus, mirroring the
+# Gitea->MQTT grammar (grammar_version: 1). The runner joins the tailnet via an
+# ephemeral Tailscale node, then publishes directly to the broker at 100.96.61.20:1883.
+# No public ingress; nothing is exposed to the internet.
+#
+# Authored by vivian-1a61bc9a. Requires one repo (or org) secret: TS_AUTHKEY.
+# The mapping logic here is verified locally against sample GitHub events; see
+# github-mqtt-bridge/map_event.sh + test/ in vivian-1a61bc9a's home dir.
+
+name: kindled-mqtt-notify
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, closed]
+  pull_request_review:
+    types: [submitted]
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Join the tailnet (ephemeral node)
+        uses: tailscale/github-action@v3
+        with:
+          authkey: ${{ secrets.TS_AUTHKEY }}
+          # If your tailnet ACLs are locked down, tag the ephemeral runner and
+          # grant that tag access to the broker host on tcp:1883. Example:
+          #   tags: tag:ci
+          version: latest
+
+      - name: Install mosquitto client
+        run: sudo apt-get update && sudo apt-get install -y mosquitto-clients
+
+      - name: Build grammar payload and publish
+        env:
+          GH_EVENT_NAME: ${{ github.event_name }}
+          # Pass the whole event as JSON via env (avoids shell-injection from titles etc.)
+          GH_EVENT: ${{ toJSON(github.event) }}
+          BROKER: 100.96.61.20
+          PORT: "1883"
+        run: |
+          set -euo pipefail
+          ts="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          body="$GH_EVENT"
+
+          pct() { local s="$1"; s="${s//%/%25}"; s="${s//\//%2F}"; s="${s//+/%2B}"; s="${s//\#/%23}"; s="${s// /%20}"; printf '%s' "$s"; }
+
+          action="$(jq -r '.action // ""' <<<"$body")"
+          repo="$(jq -r '.repository.full_name' <<<"$body")"
+          pr="$(jq -r '.pull_request.number // .number' <<<"$body")"
+          head_sha="$(jq -r '.pull_request.head.sha // ""' <<<"$body")"
+          actor="$(jq -r '.sender.login // ""' <<<"$body")"
+          merged="$(jq -r '.pull_request.merged // false' <<<"$body")"
+
+          case "$GH_EVENT_NAME:$action" in
+            pull_request:opened|pull_request:reopened) event="opened" ;;
+            pull_request:synchronize)                  event="synchronized" ;;
+            pull_request:closed) [ "$merged" = "true" ] && event="merged" || event="closed" ;;
+            pull_request_review:submitted)             event="reviewed" ;;
+            *) echo "unsurfaced action $GH_EVENT_NAME:$action — nothing to publish"; exit 0 ;;
+          esac
+
+          terminal=false; case "$event" in merged|closed) terminal=true ;; esac
+          enc_repo="$(pct "$repo")"
+          payload="$(jq -cn --argjson gv 1 --arg e "$event" --arg r "$repo" --argjson pr "$pr" \
+            --arg hs "$head_sha" --arg a "$actor" --arg ts "$ts" --argjson term "$terminal" \
+            '{grammar_version:$gv, event:$e, repo:$r, pr:$pr, head_sha:$hs, actor:$a, ts:$ts, terminal:$term}')"
+
+          base="kindled/github/repo/${enc_repo}/pr/${pr}"
+          echo "Publishing $event -> $base"
+          # Event pulse (not retained) + status snapshot (retained), both qos 1 — mirrors the Gitea bridge.
+          mosquitto_pub -h "$BROKER" -p "$PORT" -q 1 -t "${base}/${event}" -m "$payload"
+          mosquitto_pub -h "$BROKER" -p "$PORT" -q 1 -r -t "${base}/status" -m "$payload"
