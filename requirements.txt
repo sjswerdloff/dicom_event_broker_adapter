@@ -2,7 +2,7 @@
 #    uv pip compile pyproject.toml -o requirements.txt
 paho-mqtt==2.1.0
     # via dicom-event-broker-adapter (pyproject.toml)
-pydicom==2.4.4
+pydicom==2.4.5
     # via
     #   dicom-event-broker-adapter (pyproject.toml)
     #   pynetdicom
